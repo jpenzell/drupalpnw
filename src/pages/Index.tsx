@@ -461,8 +461,8 @@ const screens = [
   { id: "A3-3-3", title: "Langer — Because", component: LangerBecauseSlide,
     notes: "Harvard 1978. 'Because' did the work. But when stakes rise, the meaningless because fails. A leader's because has to hold up when it matters." },
 
-  { id: "A3-3-5", title: "Two Moves", component: TwoMovesSlide,
-    notes: "Provide the want. Suggest the action. Everything else is reaction." },
+  { id: "A3-3-5", title: "Three Moves", component: TwoMovesSlide,
+    notes: "Provide the need. Suggest the action. Introduce the obstacle. Everything else is reaction." },
   { id: "A3-3-7", title: "AI Changes Like Humans", component: AIChangesLikeHumansSlide,
     notes: "OpenAI's GPT-5.5 prompting note — yesterday's playbook becomes noise." },
 
