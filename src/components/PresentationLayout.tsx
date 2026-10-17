@@ -279,7 +279,7 @@ export const PresentationLayout = ({
               {currentIndex + 1} / {totalScreens}
             </span>
             {spare && (
-              <span className="text-xs uppercase tracking-wider text-spotlight border border-spotlight/40 bg-spotlight/10 rounded-full px-3 py-1">
+              <span className="text-xs uppercase tracking-wider font-semibold text-foreground border border-spotlight/45 bg-spotlight/20 rounded-full px-3 py-1">
                 Spare · skip if short
               </span>
             )}
