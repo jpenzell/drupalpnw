@@ -3,6 +3,7 @@ import { Linkedin, Presentation, Coffee, Check, Loader2 } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { usePresentationMode } from "@/contexts/PresentationModeContext";
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/josh-penzell/";
 

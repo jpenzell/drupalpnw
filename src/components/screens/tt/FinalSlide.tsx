@@ -3,9 +3,11 @@ import { QRCodeSVG } from "qrcode.react";
 import { ZenBackdrop } from "../ZenBackdrop";
 import curtainCall from "@/assets/zen/curtain-call.jpg";
 import { getPublicOrigin } from "@/lib/publicUrl";
+import { usePresentationMode } from "@/contexts/PresentationModeContext";
 
 export const FinalSlide = () => {
   const connectUrl = `${getPublicOrigin()}/connect`;
+  const { eventName, eventWhen } = usePresentationMode();
 
 
   return (
@@ -16,16 +18,16 @@ export const FinalSlide = () => {
           <div className="space-y-6 text-left">
             <p className="slide-kicker text-secondary">Curtain call</p>
             <h2 className="slide-title font-display font-bold text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.85)]">
-              Now go imagine.
+              Change one thing on Monday.
             </h2>
             <p className="slide-body text-white/85 italic drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)]">
-              Rehearse the future of the learning you design — together.
+              Structured freedom. Curb-cut design. One thing you'll actually change.
             </p>
             <p className="slide-body text-white/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)]">
               Josh Penzell · Imagination Applied
             </p>
             <p className="slide-caption text-white/65 uppercase tracking-[0.12em]">
-              Minnesota Chapter of ISPI · Digital Learning Forum
+              {eventName} · {eventWhen}
             </p>
           </div>
 
