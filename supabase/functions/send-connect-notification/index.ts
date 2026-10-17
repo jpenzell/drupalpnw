@@ -15,7 +15,7 @@ const corsHeaders = {
 }
 
 const RECIPIENT = 'josh@joshpenzell.com'
-const FROM = 'Rehearsing the Future <noreply@notify.joshpenzell.com>'
+const FROM = 'AI for All Minds <noreply@notify.joshpenzell.com>'
 const SENDER_DOMAIN = 'notify.joshpenzell.com'
 const TEMPLATE_NAME = 'new-connect-submission'
 

@@ -1,4 +1,4 @@
-import { Linkedin, Presentation, Coffee, ScanLine } from "lucide-react";
+import { Linkedin, Presentation, Coffee, ScanLine, Globe2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { ZenBackdrop } from "../ZenBackdrop";
 import curtainCall from "@/assets/zen/curtain-call.jpg";
@@ -69,6 +69,10 @@ export const FinalSlide = () => {
               <li className="flex items-center gap-3">
                 <Coffee className="w-5 h-5 text-secondary shrink-0" />
                 Ask for a follow-up
+              </li>
+              <li className="flex items-center gap-3">
+                <Globe2 className="w-5 h-5 text-secondary shrink-0" />
+                Special Olympics Inclusion Academy
               </li>
             </ul>
             <p className="text-muted-foreground text-base font-mono">
