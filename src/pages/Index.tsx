@@ -728,7 +728,7 @@ const RUN_ORDER = [
   "A3-3-1", "A3-3-1b", "A3-3-2", "A3-3-2b", "A3-3-3", "A3-3-5", "A3-3-7",
   "A4-SUM",
   // Dream vs imagination
-  "AM-dream", "A4-IMAGINE",
+  "AM-dream", "AM-dream-2", "A4-IMAGINE",
   "S29",
 ];
 
