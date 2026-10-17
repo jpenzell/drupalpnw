@@ -11,16 +11,17 @@ interface JoinSessionScreenProps {
 
 export const JoinSessionScreen = ({ initialCode, onJoined }: JoinSessionScreenProps) => {
   const [code, setCode] = useState(initialCode?.toUpperCase() || "");
-  const { joinSession, isLoading, error, session } = useSession();
+  const { joinSession, isLoading, error, session, authReady } = useSession();
 
-  // Auto-join if initial code provided
+  // Auto-join if initial code provided — wait for the anonymous sign-in so the
+  // session lookup runs with a real auth session instead of raw anon access.
   useEffect(() => {
-    if (initialCode && !session) {
+    if (initialCode && authReady && !session) {
       joinSession(initialCode).then((success) => {
         if (success) onJoined();
       });
     }
-  }, [initialCode]);
+  }, [initialCode, authReady]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
