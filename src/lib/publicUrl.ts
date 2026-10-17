@@ -2,7 +2,7 @@
 // The Lovable preview host (id-preview--*.lovable.app) requires a Lovable
 // login, so participants scanning a QR there get blocked. We swap any
 // preview/dev host for the published production domain.
-const PUBLIC_ORIGIN = "https://ispi.lovable.app";
+const PUBLIC_ORIGIN = "https://drupalpnw.lovable.app";
 
 export function getPublicOrigin(): string {
   if (typeof window === "undefined") return PUBLIC_ORIGIN;
