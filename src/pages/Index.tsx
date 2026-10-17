@@ -282,8 +282,11 @@ const screens = [
       <SimpleTextSlide eyebrow="The curb-cut principle" primary="Design for the margins." tertiary="Improve the center." secondary="Curb cuts were won by disability activists. Then strollers, suitcases, and bikes used them too." />
     ), notes: "Takeaway #2. Curb cuts came from 1970s Berkeley disability activism; now everyone with wheels uses them. With AI, designing for the edges is finally affordable." },
   { id: "AM-dream", title: "Dream vs. Imagination", component: () => (
+      <SimpleTextSlide eyebrow="Aphantasia" primary="Many people with no mind's eye still dream in full color." secondary="Which means the brain can still make images — it just isn't you making them." tertiary="Imagination and dreaming are different brain functions." />
+    ), notes: "The aphantasia beat. Say 'many', not 'all': Zeman 2024 (Trends in Cognitive Sciences) reports dream imagery typically preserved in aphantasia, while Dawes et al. 2020 (Scientific Reports) found aphantasics' dreams lean less vivid. Land the line: imagination and dreaming are different brain functions. [Adjust the middle line to your own wording.]" },
+  { id: "AM-dream-2", title: "What That Means", component: () => (
       <SimpleTextSlide primary="A dream happens to you." tertiary="Imagination is something you direct." />
-    ), notes: "Come back around: dream vs imagination. Then: dream big enough for AI. [Adjust this line to your own wording.]" },
+    ), notes: "The payoff of the science: one arrives on its own, one is aimed. Then: dream big enough for AI. [Adjust this line to your own wording.]" },
 
 
   // ============ ACT 1 — THE PROBLEM IS HUMAN ============
@@ -725,7 +728,7 @@ const RUN_ORDER = [
   "A3-3-1", "A3-3-1b", "A3-3-2", "A3-3-2b", "A3-3-3", "A3-3-5", "A3-3-7",
   "A4-SUM",
   // Dream vs imagination
-  "AM-dream", "A4-IMAGINE",
+  "AM-dream", "AM-dream-2", "A4-IMAGINE",
   "S29",
 ];
 
