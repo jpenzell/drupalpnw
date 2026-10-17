@@ -184,6 +184,7 @@ const screens = [
         question="When you read this sentence, do you hear it?"
         prompt="An inner voice reading along in your head."
         options={["Always — clear as speech", "Sometimes", "Rarely", "Never — it's silent in there"]}
+        showJoinQR
       />
     ), notes: "Same with inner voice. Let the poll fill. Find the 'never' people — the room usually gasps." },
   { id: "AM-voice-reveal", title: "No Inner Voice", component: () => (
@@ -200,6 +201,7 @@ const screens = [
         options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
         image={duckRabbit}
         imageAlt="Duck-rabbit illusion"
+        showJoinQR
       />
     ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
   { id: "AM-1000", title: "Worth a Thousand Words?", component: () => (
@@ -242,6 +244,7 @@ const screens = [
         question="Captions were built for deaf and hard-of-hearing viewers."
         prompt="Who uses them today?"
         options={["Mostly deaf and hard-of-hearing viewers", "About half and half", "Mostly people who can hear fine"]}
+        showJoinQR
       />
     ), notes: "Poll, then: most caption users are hearing — noisy rooms, second languages, quiet phones, focus. [Cite your preferred source aloud.]" },
   { id: "AM-curb", title: "The Curb-Cut Principle", component: () => (
