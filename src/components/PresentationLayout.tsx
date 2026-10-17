@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Info, ZoomIn, ZoomOut, Maximize2, Play, RotateCcw, X, Settings, Palette } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, ZoomIn, ZoomOut, Maximize2, Play, RotateCcw, X, Settings, Palette, Captions, CaptionsOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { ModeSelector } from "@/components/ModeSelector";
 import { FitToStage } from "@/components/FitToStage";
 import { SessionQRCode } from "@/components/SessionQRCode";
 import { useSession } from "@/contexts/SessionContext";
+import { useLiveCaptions } from "@/hooks/useLiveCaptions";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { toast } from "sonner";
 import {
@@ -58,6 +59,7 @@ export const PresentationLayout = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isBlackout, setIsBlackout] = useState(false);
   const [hideChrome, setHideChrome] = useState(false);
+  const captions = useLiveCaptions();
 
   const { session, createSession, endSession, updateSlide, isPresenter: hasSession } = useSession();
   const { presentationTitle } = usePresentationMode();
@@ -221,6 +223,10 @@ export const PresentationLayout = ({
       if (isTextInput) return;
       e.preventDefault();
       cycleTheme();
+    } else if (e.key === "c" || e.key === "C") {
+      if (isTextInput) return;
+      e.preventDefault();
+      captions.toggle();
     }
   };
 
@@ -343,6 +349,24 @@ export const PresentationLayout = ({
               </DropdownMenuContent>
             </DropdownMenu>
 
+            {captions.supported && (
+              <Button
+                variant={captions.enabled ? "default" : "outline"}
+                size="sm"
+                className="h-8 gap-1.5 px-2"
+                onClick={() => {
+                  captions.toggle();
+                  if (!captions.enabled) toast.success("Captions on — listening to your mic");
+                }}
+                title="Live captions (press C)"
+                aria-label="Toggle live captions"
+                aria-pressed={captions.enabled}
+              >
+                {captions.enabled ? <Captions className="h-3.5 w-3.5" /> : <CaptionsOff className="h-3.5 w-3.5" />}
+                <span className="text-xs hidden md:inline">CC</span>
+              </Button>
+            )}
+
             <div className="flex items-center gap-1 border rounded-md px-2 py-1">
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleZoomOut} disabled={zoom <= 50}>
                 <ZoomOut className="h-3 w-3" />
@@ -461,6 +485,24 @@ export const PresentationLayout = ({
           </Button>
         </div>
       )}
+      {/* Live captions bar — a real layout row, so it shrinks the stage
+          instead of covering it. Nothing gets cut off. */}
+      {captions.enabled && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="shrink-0 w-full bg-black/90 text-white px-6 py-3 flex items-center justify-center gap-3 min-h-[3.25rem]"
+        >
+          <span
+            className={`h-2 w-2 rounded-full shrink-0 ${captions.listening ? "bg-red-500 animate-pulse" : "bg-muted-foreground"}`}
+            aria-hidden="true"
+          />
+          <p className="text-lg md:text-xl font-medium text-center leading-snug truncate max-w-full">
+            {captions.error ?? (captions.text || "Listening…")}
+          </p>
+        </div>
+      )}
+
       {/* Blackout overlay — press B to toggle */}
       {isBlackout && (
         <div
