@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Linkedin, Presentation, Coffee, Check, Loader2, ArrowUpRight } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { Button } from "@/components/ui/button";
+import { PhoneCaptions } from "@/components/PhoneCaptions";
+import { useSession } from "@/contexts/SessionContext";
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/josh-penzell/";
 const ACADEMY_URL = "https://www.specialolympics.org/what-we-do/youth-and-schools/global-center-for-inclusion-in-education/unified-champion-schools-inclusion-academy";
@@ -36,6 +38,14 @@ const schema = z.object({
 
 const Connect = ({ embedded = false }: { embedded?: boolean }) => {
   const { presentationTitle } = usePresentationMode();
+  const { session, joinSession } = useSession();
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("join");
+    if (!embedded && code && !session) void joinSession(code);
+  }, [embedded, session, joinSession]);
+  const captionControls = !embedded ? (
+    <div className="fixed bottom-0 inset-x-0 z-50"><PhoneCaptions sessionId={session?.id} /></div>
+  ) : null;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
@@ -117,7 +127,7 @@ const Connect = ({ embedded = false }: { embedded?: boolean }) => {
 
   if (submitted) {
     return (
-      <main className={`${embedded ? "py-8" : "min-h-screen px-6 py-12"} bg-background flex items-center justify-center`}>
+      <main className={`${embedded ? "py-8" : "min-h-screen px-6 pt-12 pb-64"} bg-background flex items-center justify-center`}>
         <div className="max-w-md w-full text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
             <Check className="w-8 h-8 text-primary" />
@@ -140,12 +150,13 @@ const Connect = ({ embedded = false }: { embedded?: boolean }) => {
           )}
           <AcademyExample />
         </div>
+        {captionControls}
       </main>
     );
   }
 
   return (
-    <main className={`${embedded ? "py-6" : "min-h-screen px-5 py-10"} bg-background`}>
+    <main className={`${embedded ? "py-6" : "min-h-screen px-5 pt-10 pb-64"} bg-background`}>
       <div className="max-w-md mx-auto space-y-8">
         <header className="space-y-2 text-center">
           <p className="text-sm uppercase tracking-widest text-primary font-semibold">
@@ -294,6 +305,7 @@ const Connect = ({ embedded = false }: { embedded?: boolean }) => {
         </form>
         <AcademyExample />
       </div>
+      {captionControls}
     </main>
   );
 };

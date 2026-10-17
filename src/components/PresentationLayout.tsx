@@ -277,7 +277,7 @@ export const PresentationLayout = ({
   }, [currentIndex, totalScreens]);
 
   return (
-    <div className={`${chromeless ? "h-screen overflow-hidden" : "min-h-screen"} w-screen max-w-full overflow-x-hidden bg-gradient-to-br from-background via-background to-muted/20 flex flex-col`}>
+    <div className={`${mode === "participant" ? "h-dvh overflow-hidden" : chromeless ? "h-screen overflow-hidden" : "min-h-screen"} w-screen max-w-full overflow-x-hidden bg-gradient-to-br from-background via-background to-muted/20 flex flex-col`}>
       {/* Header */}
       {!chromeless && (
         <header className="border-b bg-card/80 backdrop-blur-sm px-6 py-3 flex items-center justify-between shadow-sm">

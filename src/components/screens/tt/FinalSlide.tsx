@@ -8,9 +8,9 @@ import { useSession } from "@/contexts/SessionContext";
 import Connect from "@/pages/Connect";
 
 export const FinalSlide = () => {
-  const connectUrl = `${getPublicOrigin()}/connect`;
   const { eventWhere } = usePresentationMode();
-  const { isParticipant } = useSession();
+  const { isParticipant, session } = useSession();
+  const connectUrl = `${getPublicOrigin()}/connect${session ? `?join=${encodeURIComponent(session.code)}` : ""}`;
 
   if (isParticipant) return <Connect embedded />;
 
