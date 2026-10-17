@@ -660,6 +660,9 @@ const SPARE_IDS = new Set([
   "A3-3-7",
   "P-HANDOFF",
   "A4-NOTE",
+  "A2-3d",
+  "AM-sharing",
+  "A3-3-4c",
 ]);
 
 // Delivered running order, following the presenter's outline:
