@@ -15,6 +15,7 @@ import zenStageSpotlight from "@/assets/zen/stage-spotlight.jpg";
 // Reusable framework slides
 import { TitleSlide } from "@/components/screens/tt/TitleSlide";
 import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/allminds/KeynoteOpening";
+import { AphantasiaScreen } from "@/components/screens/allminds/AphantasiaScreen";
 import { LiveChoicePoll } from "@/components/screens/allminds/LiveChoicePoll";
 import { TimePerceptionExperiment } from "@/components/screens/allminds/TimePerceptionExperiment";
 import { SensoryExperiment } from "@/components/screens/allminds/SensoryExperiment";
@@ -156,15 +157,16 @@ const screens = [
   { id: "AM-ball", title: "Picture a Ball — Poll", component: () => (
       <LiveChoicePoll
         pollKey="am-ball"
-        kicker="Experiment 1"
         question="Close your eyes. Picture a ball."
-        prompt="What did you actually see?"
+        showJoinQR
         options={["Vivid — color, texture, maybe it moved", "A clear shape", "Faint or fuzzy", "Nothing — I just knew the idea"]}
       />
     ), notes: "Picture-a-ball audience survey. Give them 5 seconds eyes closed. Then the poll. Ask a few people: what color? Was it moving? Did anyone see nothing at all?" },
   { id: "AM-ball-reveal", title: "So Many Ways", component: () => (
       <SimpleTextSlide eyebrow="What just happened" primary="One word. So many different balls." secondary="And some of us saw no ball at all." />
     ), notes: "So many different ways we interacted with one word. Some people: none. That's aphantasia — and most people who have it don't find out until adulthood." },
+  { id: "AM-aphantasia", title: "What Aphantasia Looks Like", component: AphantasiaScreen,
+    notes: "Aphantasia: little or no voluntary mental imagery. Term coined by Adam Zeman (2015); estimates are roughly 1 in 25 to 1 in 50 people — say it as an estimate. Walk left to right: same word, same ball, four very different inner screens. People on the right still know what a ball is — they just don't see it." },
   { id: "AM-voice", title: "Inner Voice — Poll", component: () => (
       <LiveChoicePoll
         pollKey="am-voice"
@@ -654,7 +656,7 @@ const SPARE_IDS = new Set([
 const RUN_ORDER = [
   "S0", "S0-sponsors", "S1",
   // We all think differently
-  "AM-ball", "AM-ball-reveal", "AM-voice", "AM-voice-reveal", "AM-aware",
+  "AM-ball", "AM-ball-reveal", "AM-aphantasia", "AM-voice", "AM-voice-reveal", "AM-aware",
   "AM-time", "AM-sensory",
   "AM-duck", "A1-1", "AM-1000",
   // Language shapes how we think
