@@ -60,7 +60,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
 
   if (isParticipant) {
     return (
-      <div className="flex-1 flex flex-col gap-4 p-5 animate-fade-in">
+      <div className="flex-1 flex flex-col gap-4 px-5 pt-10 pb-6 animate-fade-in">
         <h2 className="text-2xl font-display font-bold text-foreground text-center">{question}</h2>
         {prompt && <p className="text-center text-muted-foreground -mt-2">{prompt}</p>}
         {image && <img src={image} alt={imageAlt ?? ""} className="max-h-56 object-contain mx-auto" />}
