@@ -177,7 +177,7 @@ const screens = [
     notes: "Aphantasia: little or no voluntary mental imagery. Term coined by Adam Zeman (2015); estimates are roughly 1 in 25 to 1 in 50 people — say it as an estimate. Walk left to right: same word, same ball, four very different inner screens. People on the right still know what a ball is — they just don't see it." },
   { id: "AM-visualize", title: "How Often We Say It", component: VisualizePhrasesScreen,
     notes: "Visualize, picture this, mind map, count sheep. We say these constantly — at work, in training, at bedtime — and each one assumes a mind's eye that some of the room doesn't have." },
-  { id: "AM-voice", "AM-voice-results", title: "Inner Voice — Poll", component: () => (
+  { id: "AM-voice", title: "Inner Voice — Poll", component: () => (
       <LiveChoicePoll
         pollKey="am-voice"
         kicker="Experiment 2"
@@ -203,7 +203,7 @@ const screens = [
   { id: "AM-aware", title: "We All Think Differently", component: () => (
       <SimpleTextSlide primary="We all think differently." tertiary="Are you aware of how much?" />
     ), notes: "THE LINE. Pause. This is the frame for everything after." },
-  { id: "AM-duck", "AM-duck-results", title: "Duck or Rabbit — Poll", component: () => (
+  { id: "AM-duck", title: "Duck or Rabbit — Poll", component: () => (
       <LiveChoicePoll
         pollKey="am-duck"
         kicker="Views of the world"
@@ -258,7 +258,7 @@ const screens = [
     notes: "Click 'Start the ramp'. The screen gets busier over 30 seconds (no flashing). Phones tap 'That's my limit'. Point at the spread: same room, same screen, very different thresholds. Tell people they can look away." },
   { id: "AM-reflect", title: "Designing for Your Own Brain", component: ReflectionWall,
     notes: "Optional reflection. Answers stay hidden until you click Show answers — read before revealing." },
-  { id: "AM-curb-q", "AM-curb-q-results", title: "Curb Cut — Poll", component: () => (
+  { id: "AM-curb-q", title: "Curb Cut — Poll", component: () => (
       <LiveChoicePoll
         pollKey="am-curb"
         kicker="The curb-cut principle"
@@ -706,9 +706,9 @@ const SPARE_IDS = new Set([
 const RUN_ORDER = [
   "S0-sponsors", "S1",
   // We all think differently
-  "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
+  "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-results", "AM-voice-reveal", "AM-aware",
   "AM-time",
-  "AM-duck", "AM-1000", "LD1.92", "L-S3a", "A1-1", "A1-3b",
+  "AM-duck", "AM-duck-results", "AM-1000", "LD1.92", "L-S3a", "A1-1", "A1-3b",
   // Language shapes how we think
   "A1-3c", "A1-3d", "L-S3a3b", "A1-4b",
   // Trained on language → humans are diverse, so is AI
@@ -716,7 +716,7 @@ const RUN_ORDER = [
   // Individual vs environment → culture
   "AM-env", "A1-5", "A1-4d", "A1-3e", "AM-role", "L-S3a3c",
   // The problem: built for the majority, AI makes it variable
-  "AM-bell", "AM-curb", "AM-curb-q", "A0-zoox", "A0-reframe",
+  "AM-bell", "AM-curb", "AM-curb-q", "AM-curb-q-results", "A0-zoox", "A0-reframe",
   // Theater is the answer
   "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
   "A3-0",
