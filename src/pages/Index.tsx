@@ -587,24 +587,27 @@ const screens = [
 // removed from the delivered order (S1 → S29); this list only badges them in
 // the presenter chrome so "skip if short on time" is visible at a glance.
 const SPARE_IDS = new Set([
+  "A1-1",
   "A0-zoox",
+  "A0-reframe",
   "L-S3a",
+  "LD1.92",
+  "L-S3a2-q",
+  "LD1.85",
+  "L-S3a2b",
   "LD1.95",
-  "L-S3a3b",
   "A1-4b",
-  "A1-5",
-  "A1-4d",
   "A1-3e",
-  "L-S3a3d",
   "L-S3a4",
   "L-S3a3c",
+  "A2-4",
+  "A2-5",
   "A2-5b",
   "A2-7",
+  "A3-1-2c",
   "A3-1-1b",
   "A3-1-1c",
   "A3-1-1d",
-  "A3-1-2",
-  "A3-1-2c",
   "A3-2-1b",
   "C5-observer-intro-video",
   "C5-observer",
@@ -618,10 +621,47 @@ const SPARE_IDS = new Set([
   "A3-3-7",
   "P-HANDOFF",
   "A4-NOTE",
-  "A4-IMAGINE",
 ]);
 
-const screensWithFlags = screens.map((screen) => ({
+// Delivered running order, following the presenter's outline:
+// minds experiments → language → AI is diverse too → culture as role →
+// designed for the bell curve → theater (cast / rehearse / direct) → dream vs imagination.
+// Any screen not listed keeps its original relative position after this list (appendix).
+const RUN_ORDER = [
+  "S0", "S0-sponsors", "S1",
+  // We all think differently
+  "AM-ball", "AM-ball-reveal", "AM-voice", "AM-voice-reveal", "AM-aware",
+  "AM-duck", "A1-1", "AM-1000",
+  // Language shapes how we think
+  "L-S3a3b", "A1-4b", "A1-3b", "A1-3c", "A1-3d",
+  // Trained on language → humans are diverse, so is AI
+  "L-S3a3d", "AM-diverse", "LD1.92", "L-S3a", "L-S3a2-q", "LD1.85", "L-S3a2b", "LD1.95",
+  // Individual vs environment → culture
+  "AM-env", "A1-5", "A1-4d", "A1-3e", "AM-role", "L-S3a4", "L-S3a3c",
+  // The problem: built for the majority, AI makes it variable
+  "AM-bell", "AM-personas", "AM-variable", "A0-zoox", "A0-reframe", "A2-3d",
+  "AM-sharing", "A3-3-4c",
+  // Theater is the answer
+  "AM-theater", "A3-1-2", "A3-1-2c", "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
+  "A3-0",
+  "A3-1-1", "A3-1-1b", "A3-1-1c", "A3-1-1d",
+  "A3-2-1", "A3-2-1b", "C5-observer-intro-video", "C5-observer", "A3-2-2", "A3-2-3", "A3-2-3b", "A3-2-4",
+  "A3-3-1", "A3-3-1b", "A3-3-2", "A3-3-2b", "A3-3-3", "A3-3-5", "A3-3-7", "P-HANDOFF",
+  "A4-SUM", "A4-NOTE",
+  // Dream vs imagination
+  "AM-dream", "A4-IMAGINE",
+  "S29",
+];
+
+const orderedScreens = (() => {
+  const byId = new Map(screens.map((s) => [s.id, s]));
+  const head = RUN_ORDER.map((id) => byId.get(id)).filter((s): s is (typeof screens)[number] => !!s);
+  const listed = new Set(RUN_ORDER);
+  const tail = screens.filter((s) => !listed.has(s.id));
+  return [...head, ...tail];
+})();
+
+const screensWithFlags = orderedScreens.map((screen) => ({
   ...screen,
   spare: SPARE_IDS.has(screen.id),
 }));
