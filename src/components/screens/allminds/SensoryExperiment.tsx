@@ -34,7 +34,6 @@ export const SensoryExperiment = () => {
 
   const start = async () => {
     if (!poll) return;
-    await supabase.from("polls").delete().eq("id", "__noop__"); // keep client warm; harmless
     await supabase.from("responses").delete().eq("poll_id", poll.id);
     await supabase
       .from("polls")
