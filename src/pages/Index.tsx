@@ -608,6 +608,9 @@ const screens = [
 // removed from the delivered order (S1 → S29); this list only badges them in
 // the presenter chrome so "skip if short on time" is visible at a glance.
 const SPARE_IDS = new Set([
+  "AM-time",
+  "AM-sensory",
+  "AM-reflect",
   "A1-1",
   "A0-zoox",
   "A0-reframe",
@@ -652,6 +655,7 @@ const RUN_ORDER = [
   "S0", "S0-sponsors", "S1",
   // We all think differently
   "AM-ball", "AM-ball-reveal", "AM-voice", "AM-voice-reveal", "AM-aware",
+  "AM-time", "AM-sensory",
   "AM-duck", "A1-1", "AM-1000",
   // Language shapes how we think
   "L-S3a3b", "A1-4b", "A1-3b", "A1-3c", "A1-3d",
@@ -660,7 +664,7 @@ const RUN_ORDER = [
   // Individual vs environment → culture
   "AM-env", "A1-5", "A1-4d", "A1-3e", "AM-role", "L-S3a4", "L-S3a3c",
   // The problem: built for the majority, AI makes it variable
-  "AM-bell", "AM-personas", "AM-variable", "A0-zoox", "A0-reframe", "A2-3d",
+  "AM-bell", "AM-personas", "AM-reflect", "AM-curb-q", "AM-curb", "AM-variable", "A0-zoox", "A0-reframe", "A2-3d",
   "AM-sharing", "A3-3-4c",
   // Theater is the answer
   "AM-theater", "A3-1-2", "A3-1-2c", "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
