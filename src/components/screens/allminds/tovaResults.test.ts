@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { TOVA_LIMIT, TOVA_BORDERLINE, tovaResults } from "./tovaResults";
