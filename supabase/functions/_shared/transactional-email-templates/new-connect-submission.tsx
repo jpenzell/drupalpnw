@@ -58,9 +58,9 @@ const Email = ({
       </Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>New connection from Rehearsing the Future</Heading>
+          <Heading style={h1}>New connection from AI for All Minds</Heading>
           <Text style={subtitle}>
-            Someone just submitted the /connect form.
+            A participant reached out after AI for All Minds at BCIT Downtown.
           </Text>
 
           <Section style={card}>
@@ -95,7 +95,7 @@ const Email = ({
 export const template = {
   component: Email,
   subject: (data: Props) =>
-    `New connection: ${data.name || data.email || 'attendee'}`,
+    `AI for All Minds — new connection: ${data.name || data.email || 'attendee'}`,
   displayName: 'New connect submission',
   previewData: {
     name: 'Jane Doe',
