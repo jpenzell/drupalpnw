@@ -104,7 +104,7 @@ export const PresentationLayout = ({
   const isPresent = mode === "present";
   // Fullscreen and `h` must both remove presenter chrome completely so the
   // mirrored slide gets the full viewport instead of invisible reserved bars.
-  const chromeless = isPresent || (isPresenter && (isFullscreen || hideChrome));
+  const chromeless = isPresent || mode === "participant" || (isPresenter && (isFullscreen || hideChrome));
   const requestedScale = zoom / 100;
 
   // Fixed 1920×1080 presentation stage, scaled to fit available area.
