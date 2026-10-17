@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Users } from "lucide-react";
 import { useLivePoll } from "./useLivePoll";
+import { JoinQRCard } from "./JoinQRCard";
 
 const QUESTION = "Where might you be designing for your own brain?";
 

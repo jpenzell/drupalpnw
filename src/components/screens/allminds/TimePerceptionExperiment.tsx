@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Users } from "lucide-react";
 import { useLivePoll } from "./useLivePoll";
+import { JoinQRCard } from "./JoinQRCard";
 
 const TARGET = 10;
 const MAX = 20;
@@ -54,10 +55,13 @@ export const TimePerceptionExperiment = () => {
 
   return (
     <div className="flex-1 flex flex-col justify-center gap-12 px-20 animate-fade-in">
-      <div className="space-y-4">
-        <p className="slide-kicker text-secondary font-semibold">Experiment · Time</p>
-        <h1 className="slide-title font-display font-bold text-foreground">Count 10 seconds. In your head.</h1>
-        <p className="slide-body-lg text-foreground/75">Phones: tap Start, then Stop when you think it's been 10. No clock.</p>
+      <div className="flex items-start justify-between gap-12">
+        <div className="space-y-4">
+          <p className="slide-kicker text-secondary font-semibold">Experiment · Time</p>
+          <h1 className="slide-title font-display font-bold text-foreground">Count 10 seconds. In your head.</h1>
+          <p className="slide-body-lg text-foreground/75">Phones: tap Start, then Stop when you think it's been 10. No clock.</p>
+        </div>
+        <JoinQRCard size={200} />
       </div>
       <div className="relative h-40 border-b-4 border-foreground/40">
         <div className="absolute inset-y-0 border-l-4 border-dashed border-primary" style={{ left: `${(TARGET / MAX) * 100}%` }}>

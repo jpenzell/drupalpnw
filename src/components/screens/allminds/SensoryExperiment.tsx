@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLivePoll } from "./useLivePoll";
+import { JoinQRCard } from "./JoinQRCard";
 
 const DURATION = 30; // seconds for the stage to ramp from calm to busy
 const WORDS = ["notification", "ping", "reply-all", "deadline", "meeting", "Slack", "urgent", "FYI", "quick q", "standup", "badge", "alert"];
@@ -85,13 +86,18 @@ export const SensoryExperiment = () => {
         ))}
       </div>
       <div className="relative z-10 h-full flex flex-col justify-center gap-8 px-20">
-        <p className="slide-kicker text-secondary font-semibold">Experiment · Sensory load</p>
-        <h1 className="slide-title font-display font-bold text-foreground bg-background/80 self-start px-4 rounded-xl">When does it become too much?</h1>
-        {!startedAt && isPresenter && (
-          <button onClick={start} disabled={!poll} className="self-start rounded-full bg-primary text-primary-foreground px-8 py-4 slide-body font-semibold disabled:opacity-50">
-            Start the ramp
-          </button>
-        )}
+        <div className="flex items-start justify-between gap-12">
+          <div className="space-y-4">
+            <p className="slide-kicker text-secondary font-semibold">Experiment · Sensory load</p>
+            <h1 className="slide-title font-display font-bold text-foreground bg-background/80 self-start px-4 rounded-xl">When does it become too much?</h1>
+            {!startedAt && isPresenter && (
+              <button onClick={start} disabled={!poll} className="rounded-full bg-primary text-primary-foreground px-8 py-4 slide-body font-semibold disabled:opacity-50">
+                Start the ramp
+              </button>
+            )}
+          </div>
+          <JoinQRCard size={200} />
+        </div>
         {startedAt && (
           <div className="bg-background/85 rounded-2xl p-6 self-start space-y-4">
             <div className="flex items-end gap-4 h-40">
