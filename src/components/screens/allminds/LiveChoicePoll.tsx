@@ -16,6 +16,8 @@ interface LiveChoicePollProps {
   imageAlt?: string;
   /** Show the join QR beside the question (first poll of the talk). */
   showJoinQR?: boolean;
+  /** Stage shows only this headline (+QR), no options or bars; phones still get `question`. */
+  stageOnly?: string;
 }
 
 /**
@@ -23,7 +25,7 @@ interface LiveChoicePollProps {
  * participants tap an option on their phones. Works with zero responses —
  * the question still reads as a "raise your hand" prompt.
  */
-export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, image, imageAlt, showJoinQR }: LiveChoicePollProps) => {
+export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, image, imageAlt, showJoinQR, stageOnly }: LiveChoicePollProps) => {
   const { session, isPresenter, isParticipant } = useSession();
   const { currentPoll, responses, myResponse, createPoll, getPollForSlide, submitResponse } = usePoll();
   const [picked, setPicked] = useState<string | null>(null);
@@ -87,9 +89,9 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
         {image && <img src={image} alt={imageAlt ?? ""} className="w-full max-h-[70vh] object-contain" />}
         <div className="space-y-8">
           {kicker && <p className="slide-kicker text-secondary font-semibold">{kicker}</p>}
-          <h1 className="slide-title font-display font-bold text-foreground">{question}</h1>
-          {prompt && <p className="slide-body-lg text-foreground/75">{prompt}</p>}
-          <div className="space-y-4">
+          <h1 className="slide-title font-display font-bold text-foreground">{stageOnly ?? question}</h1>
+          {prompt && !stageOnly && <p className="slide-body-lg text-foreground/75">{prompt}</p>}
+          {!stageOnly && <><div className="space-y-4">
             {options.map((o) => {
               const pct = total ? Math.round((counts[o] / total) * 100) : 0;
               return (
@@ -105,7 +107,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
           </div>
           <p className="slide-caption text-muted-foreground flex items-center gap-2">
             <Users className="h-6 w-6" /> {total > 0 ? `${total} ${total === 1 ? "response" : "responses"}` : "Answer on your phone — or just raise a hand."}
-          </p>
+          </p></>}
         </div>
         {showJoinQR && session && !image && (
           <div className="flex flex-col items-center gap-4 p-6 rounded-3xl border-2 border-border bg-card">

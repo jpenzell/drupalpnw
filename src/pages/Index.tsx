@@ -15,7 +15,7 @@ import zenStageSpotlight from "@/assets/zen/stage-spotlight.jpg";
 // Reusable framework slides
 import { TitleSlide } from "@/components/screens/tt/TitleSlide";
 import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/allminds/KeynoteOpening";
-import { AphantasiaScreen } from "@/components/screens/allminds/AphantasiaScreen";
+import { AphantasiaScreen, VisualizePhrasesScreen } from "@/components/screens/allminds/AphantasiaScreen";
 import { LiveChoicePoll } from "@/components/screens/allminds/LiveChoicePoll";
 import { TimePerceptionExperiment } from "@/components/screens/allminds/TimePerceptionExperiment";
 import { SensoryExperiment } from "@/components/screens/allminds/SensoryExperiment";
@@ -154,19 +154,29 @@ const screens = [
     notes: "Welcome the BCIT Downtown room. Curtain up. Every team, product, and organization is shaped by invisible cognitive assumptions — and the people struggling have already learned to work around us. MFA + MBA, 20 years of theater directing, Amazon/Zillow/Skillsoft, and a late diagnosis of my own. Today is not a lecture about neurodiversity: it's a set of live experiments you are inside of." },
 
   // ============ ALL MINDS — presenter outline beats (ordered by RUN_ORDER below) ============
-  { id: "AM-ball", title: "Picture a Ball — Poll", component: () => (
+  { id: "AM-ball", title: "Picture a Ball", component: () => (
       <LiveChoicePoll
         pollKey="am-ball"
-        question="Close your eyes. Picture a ball."
+        stageOnly="Close your eyes. Picture a ball."
+        question="Can you tell me the color of the ball?"
+        options={["Yes, very clearly", "Somewhat", "What color?"]}
         showJoinQR
-        options={["Vivid — color, texture, maybe it moved", "A clear shape", "Faint or fuzzy", "Nothing — I just knew the idea"]}
       />
-    ), notes: "Picture-a-ball audience survey. Give them 5 seconds eyes closed. Then the poll. Ask a few people: what color? Was it moving? Did anyone see nothing at all?" },
+    ), notes: "Give them 5 seconds eyes closed. Then ask out loud: can you tell me the color of the ball? The question pops up on their phones. Results are on the next screen." },
+  { id: "AM-ball-results", title: "Ball — Results", component: () => (
+      <LiveChoicePoll
+        pollKey="am-ball"
+        question="Can you tell me the color of the ball?"
+        options={["Yes, very clearly", "Somewhat", "What color?"]}
+      />
+    ), notes: "Reveal the spread. Ask a few people: what color? Was it moving? Anyone who said 'What color?'" },
   { id: "AM-ball-reveal", title: "So Many Ways", component: () => (
       <SimpleTextSlide eyebrow="What just happened" primary="One word. So many different balls." secondary="And some of us saw no ball at all." />
     ), notes: "So many different ways we interacted with one word. Some people: none. That's aphantasia — and most people who have it don't find out until adulthood." },
   { id: "AM-aphantasia", title: "What Aphantasia Looks Like", component: AphantasiaScreen,
     notes: "Aphantasia: little or no voluntary mental imagery. Term coined by Adam Zeman (2015); estimates are roughly 1 in 25 to 1 in 50 people — say it as an estimate. Walk left to right: same word, same ball, four very different inner screens. People on the right still know what a ball is — they just don't see it." },
+  { id: "AM-visualize", title: "How Often We Say It", component: VisualizePhrasesScreen,
+    notes: "Visualize, picture this, mind map, count sheep. We say these constantly — at work, in training, at bedtime — and each one assumes a mind's eye that some of the room doesn't have." },
   { id: "AM-voice", title: "Inner Voice — Poll", component: () => (
       <LiveChoicePoll
         pollKey="am-voice"
@@ -656,7 +666,7 @@ const SPARE_IDS = new Set([
 const RUN_ORDER = [
   "S0", "S0-sponsors", "S1",
   // We all think differently
-  "AM-ball", "AM-ball-reveal", "AM-aphantasia", "AM-voice", "AM-voice-reveal", "AM-aware",
+  "AM-ball", "AM-ball-results", "AM-ball-reveal", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
   "AM-time", "AM-sensory",
   "AM-duck", "A1-1", "AM-1000",
   // Language shapes how we think
