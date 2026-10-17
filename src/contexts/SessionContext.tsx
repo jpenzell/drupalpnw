@@ -184,7 +184,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-    }, [authUser, participantId]);
+  }, [authUser, participantId]);
 
   const joinSession = useCallback(async (code: string): Promise<boolean> => {
     setIsLoading(true);
