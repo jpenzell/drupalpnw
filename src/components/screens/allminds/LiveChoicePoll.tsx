@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Users, CheckCircle } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
-import { getPublicOrigin } from "@/lib/publicUrl";
+import { JoinQRCard } from "./JoinQRCard";
 import { useSession } from "@/contexts/SessionContext";
 import { usePoll } from "@/contexts/PollContext";
 
@@ -85,7 +84,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
 
   return (
     <div className="flex-1 flex items-center justify-center px-16 animate-fade-in">
-      <div className={`w-full max-w-7xl grid gap-16 items-center ${image ? "grid-cols-2" : showJoinQR && session ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
+      <div className={`w-full max-w-7xl grid gap-16 items-center ${image ? (showJoinQR && session ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-2") : showJoinQR && session ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
         {image && <img src={image} alt={imageAlt ?? ""} className="w-full max-h-[70vh] object-contain" />}
         <div className="space-y-8">
           {kicker && <p className="slide-kicker text-secondary font-semibold">{kicker}</p>}
@@ -109,15 +108,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
             <Users className="h-6 w-6" /> {total > 0 ? `${total} ${total === 1 ? "response" : "responses"}` : "Answer on your phone — or just raise a hand."}
           </p></>}
         </div>
-        {showJoinQR && session && !image && (
-          <div className="flex flex-col items-center gap-4 p-6 rounded-3xl border-2 border-border bg-card">
-            <p className="slide-chrome uppercase tracking-widest font-semibold text-secondary">Scan to join</p>
-            <div className="bg-white p-4 rounded-2xl">
-              <QRCodeSVG value={`${getPublicOrigin()}/?join=${session.code}`} size={280} level="M" />
-            </div>
-            <p className="text-4xl font-mono font-bold tracking-widest text-primary">{session.code}</p>
-          </div>
-        )}
+        {showJoinQR && <JoinQRCard />}
       </div>
     </div>
   );
