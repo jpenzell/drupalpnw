@@ -13,20 +13,25 @@ export const KeynoteTitleScreen = () => {
   );
 };
 
-export const KeynoteSponsorScreen = () => (
-  <main
-    aria-label="Thank you to our sponsors"
-    className="relative flex-1 min-h-0 h-full w-full qr-paper flex items-center justify-center overflow-hidden"
-  >
-    <img
-      src={sponsorSlideImage}
-      alt="Thank you to our sponsors — official PNW Drupal Summit 2026 artwork: Acquia; Slalom; Diffy; Tag1 Consulting; ImageX; MindSing Creative Works; Affinity Bridge; Morrison Multimedia Inc.; Sandstorm Design; Blue Drop Labs; Woolwich Web Works; Tugboat."
-      className="h-full w-full object-contain"
-      loading="eager"
-      draggable={false}
-    />
-    <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10 scale-90 origin-right">
-      <JoinQRCard size={150} />
-    </div>
-  </main>
-);
+export const KeynoteSponsorScreen = () => {
+  const { session } = useSession();
+  return (
+    <main
+      aria-label="Thank you to our sponsors"
+      className="relative flex-1 min-h-0 h-full w-full qr-paper flex flex-wrap items-center justify-center gap-4 p-4 overflow-hidden"
+    >
+      <img
+        src={sponsorSlideImage}
+        alt="Thank you to our sponsors — official PNW Drupal Summit 2026 artwork: Acquia; Slalom; Diffy; Tag1 Consulting; ImageX; MindSing Creative Works; Affinity Bridge; Morrison Multimedia Inc.; Sandstorm Design; Blue Drop Labs; Woolwich Web Works; Tugboat."
+        className="h-full w-full min-w-[240px] flex-1 object-contain"
+        loading="eager"
+        draggable={false}
+      />
+      {session && (
+        <div className="shrink-0 flex items-center justify-center">
+          <JoinQRCard size={150} />
+        </div>
+      )}
+    </main>
+  );
+};
