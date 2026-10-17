@@ -107,7 +107,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
           </div>
           <p className="slide-caption text-muted-foreground flex items-center gap-2">
             <Users className="h-6 w-6" /> {total > 0 ? `${total} ${total === 1 ? "response" : "responses"}` : "Answer on your phone — or just raise a hand."}
-          </p>
+          </p></>}
         </div>
         {showJoinQR && session && !image && (
           <div className="flex flex-col items-center gap-4 p-6 rounded-3xl border-2 border-border bg-card">
