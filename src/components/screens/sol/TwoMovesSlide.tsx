@@ -23,7 +23,7 @@ export const TwoMovesSlide = () => {
             <div className="flex items-baseline justify-center gap-6 animate-fade-in">
               <span className="slide-title font-display text-secondary">2.</span>
               <p className="slide-subtitle font-display text-foreground">
-                Suggest the <span className="text-primary italic">action.</span>
+                Introduce the <span className="text-primary italic">obstacle.</span>
               </p>
             </div>
           )}
@@ -31,7 +31,7 @@ export const TwoMovesSlide = () => {
             <div className="flex items-baseline justify-center gap-6 animate-fade-in">
               <span className="slide-title font-display text-secondary">3.</span>
               <p className="slide-subtitle font-display text-foreground">
-                Introduce the <span className="text-primary italic">obstacle.</span>
+                Suggest the <span className="text-primary italic">action.</span>
               </p>
             </div>
           )}
