@@ -671,9 +671,9 @@ const RUN_ORDER = [
   // We all think differently
   "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
   "AM-time",
-  "AM-duck", "AM-1000", "LD1.92", "L-S3a", "A1-1",
+  "AM-duck", "AM-1000", "LD1.92", "L-S3a", "A1-1", "A1-3b",
   // Language shapes how we think
-  "L-S3a3b", "A1-4b", "A1-3b", "A1-3c", "A1-3d",
+  "L-S3a3b", "A1-4b", "A1-3c", "A1-3d",
   // Trained on language → humans are diverse, so is AI
   "L-S3a3d", "AM-diverse", "L-S3a2-q", "LD1.85", "L-S3a2b", "LD1.95",
   // Individual vs environment → culture
