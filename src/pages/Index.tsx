@@ -16,6 +16,9 @@ import zenStageSpotlight from "@/assets/zen/stage-spotlight.jpg";
 import { TitleSlide } from "@/components/screens/tt/TitleSlide";
 import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/allminds/KeynoteOpening";
 import { LiveChoicePoll } from "@/components/screens/allminds/LiveChoicePoll";
+import { TimePerceptionExperiment } from "@/components/screens/allminds/TimePerceptionExperiment";
+import { SensoryExperiment } from "@/components/screens/allminds/SensoryExperiment";
+import { ReflectionWall } from "@/components/screens/allminds/ReflectionWall";
 import duckRabbit from "@/assets/duck-rabbit.png";
 import { AboutMeSlide } from "@/components/screens/tt/AboutMeSlide";
 import { PartnerExerciseSlide } from "@/components/screens/tt/PartnerExerciseSlide";
@@ -214,6 +217,24 @@ const screens = [
   { id: "AM-theater", title: "Theater Is the Answer", component: () => (
       <SimpleTextSlide eyebrow="So" primary="Theater is the answer." secondary="Creative people, working together, to be more creative." backdropImage={zenStageSpotlight} />
     ), notes: "Theater is the answer: creative people gathering to be more creative together. Then Uzzi, then the three rooms: casting, rehearsal, directing — rehearsing the future." },
+  { id: "AM-time", title: "Time Perception — Live", component: TimePerceptionExperiment,
+    notes: "Count 10 seconds in your heads. Phones: Start, then Stop at 10. Watch the dots spread. Time blindness is part of ADHD for many people — and nobody in the room is 'wrong'. Optional; skip if short." },
+  { id: "AM-sensory", title: "Sensory Load — Live", component: SensoryExperiment,
+    notes: "Click 'Start the ramp'. The screen gets busier over 30 seconds (no flashing). Phones tap 'That's my limit'. Point at the spread: same room, same screen, very different thresholds. Tell people they can look away." },
+  { id: "AM-reflect", title: "Designing for Your Own Brain", component: ReflectionWall,
+    notes: "Optional reflection. Answers stay hidden until you click Show answers — read before revealing." },
+  { id: "AM-curb-q", title: "Curb Cut — Poll", component: () => (
+      <LiveChoicePoll
+        pollKey="am-curb"
+        kicker="The curb-cut principle"
+        question="Captions were built for deaf and hard-of-hearing viewers."
+        prompt="Who uses them today?"
+        options={["Mostly deaf and hard-of-hearing viewers", "About half and half", "Mostly people who can hear fine"]}
+      />
+    ), notes: "Poll, then: most caption users are hearing — noisy rooms, second languages, quiet phones, focus. [Cite your preferred source aloud.]" },
+  { id: "AM-curb", title: "The Curb-Cut Principle", component: () => (
+      <SimpleTextSlide eyebrow="The curb-cut principle" primary="Design for the margins." tertiary="Improve the center." secondary="Curb cuts were won by disability activists. Then strollers, suitcases, and bikes used them too." />
+    ), notes: "Takeaway #2. Curb cuts came from 1970s Berkeley disability activism; now everyone with wheels uses them. With AI, designing for the edges is finally affordable." },
   { id: "AM-dream", title: "Dream vs. Imagination", component: () => (
       <SimpleTextSlide primary="A dream happens to you." tertiary="Imagination is something you direct." />
     ), notes: "Come back around: dream vs imagination. Then: dream big enough for AI. [Adjust this line to your own wording.]" },
