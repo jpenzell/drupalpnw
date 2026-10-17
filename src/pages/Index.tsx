@@ -670,7 +670,7 @@ const RUN_ORDER = [
   "S0", "S0-sponsors", "S1",
   // We all think differently
   "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
-  "AM-time", "AM-sensory",
+  "AM-time",
   "AM-duck", "A1-1", "AM-1000",
   // Language shapes how we think
   "L-S3a3b", "A1-4b", "A1-3b", "A1-3c", "A1-3d",
