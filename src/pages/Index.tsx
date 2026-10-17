@@ -720,7 +720,7 @@ const RUN_ORDER = [
   // We all think differently
 "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-pupils", "AM-voice", "AM-voice-results", "AM-voice-reveal", "AM-time",
   "AM-aware",
-  "AM-duck", "AM-duck-results", "AM-1000", "L-S3a", "LD1.92", "A1-3b",
+  "L-S3a", "LD1.92", "A1-3b",
   // Language shapes how we think
   "A1-3c", "A1-3d", "L-S3a3b",
   // Trained on language → humans are diverse, so is AI
