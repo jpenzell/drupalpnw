@@ -398,26 +398,34 @@ export const PresentationLayout = ({
         ref={stageHostRef}
         className="flex-1 min-h-0 w-full max-w-full overflow-hidden flex items-center justify-center bg-muted relative"
       >
-        <div
-          className="absolute"
-          style={{
-            width: 1920,
-            height: 1080,
-            left: "50%",
-            top: "50%",
-            transform: `translate(-50%, -50%) scale(${stageScale * requestedScale})`,
-            transformOrigin: "center center",
-            backfaceVisibility: "hidden",
-            WebkitFontSmoothing: "antialiased",
-          }}
-        >
-          <div
-            className="slide-content w-full h-full flex flex-col overflow-hidden"
-            style={{ containerType: "size" } as React.CSSProperties}
-          >
-            <FitToStage deps={currentScreen}>{children}</FitToStage>
+        {mode === "participant" ? (
+          // Phones get a normal full-width scrolling page, not the scaled
+          // 1920×1080 stage — participant screens render their own mobile UI.
+          <div className="slide-content w-full h-full overflow-y-auto">
+            <div className="w-full max-w-md mx-auto p-4">{children}</div>
           </div>
-        </div>
+        ) : (
+          <div
+            className="absolute"
+            style={{
+              width: 1920,
+              height: 1080,
+              left: "50%",
+              top: "50%",
+              transform: `translate(-50%, -50%) scale(${stageScale * requestedScale})`,
+              transformOrigin: "center center",
+              backfaceVisibility: "hidden",
+              WebkitFontSmoothing: "antialiased",
+            }}
+          >
+            <div
+              className="slide-content w-full h-full flex flex-col overflow-hidden"
+              style={{ containerType: "size" } as React.CSSProperties}
+            >
+              <FitToStage deps={currentScreen}>{children}</FitToStage>
+            </div>
+          </div>
+        )}
       </main>
 
 
