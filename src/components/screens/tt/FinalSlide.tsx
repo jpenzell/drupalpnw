@@ -13,7 +13,7 @@ export const FinalSlide = () => {
   return (
     <ZenBackdrop image={curtainCall} overlay="heavy" kenBurns alt="Stage curtain call under warm spotlights">
       <div className="w-full h-full flex items-center justify-center px-16 py-12">
-        <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-[1fr_auto] gap-12 items-center">
+        <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-[1.25fr_auto] gap-12 items-center">
           {/* Left: headline + signature */}
           <div className="space-y-6 text-left">
             <p className="slide-kicker text-secondary">Curtain call</p>
@@ -26,7 +26,7 @@ export const FinalSlide = () => {
             <p className="slide-body text-white/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)]">
               Josh Penzell · Imagination Applied
             </p>
-            <p className="slide-caption text-white/65 uppercase tracking-[0.12em]">
+            <p className="slide-caption text-white/65 uppercase tracking-[0.12em] whitespace-nowrap">
               {eventWhere}
             </p>
           </div>
