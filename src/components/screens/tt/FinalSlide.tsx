@@ -7,7 +7,7 @@ import { usePresentationMode } from "@/contexts/PresentationModeContext";
 
 export const FinalSlide = () => {
   const connectUrl = `${getPublicOrigin()}/connect`;
-  const { eventWhere, eventWhen } = usePresentationMode();
+  const { eventWhere } = usePresentationMode();
 
 
   return (
