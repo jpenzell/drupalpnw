@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect, useRef, useLayoutEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, Info, ZoomIn, ZoomOut, Maximize2, Play, RotateCcw, X, Settings, Palette } from "lucide-react";
+import { ChevronLeft, ChevronRight, Info, ZoomIn, ZoomOut, Maximize2, Play, RotateCcw, X, Settings, Palette, Captions, CaptionsOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { ModeSelector } from "@/components/ModeSelector";
 import { FitToStage } from "@/components/FitToStage";
 import { SessionQRCode } from "@/components/SessionQRCode";
 import { useSession } from "@/contexts/SessionContext";
+import { useLiveCaptions } from "@/hooks/useLiveCaptions";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { toast } from "sonner";
 import {
