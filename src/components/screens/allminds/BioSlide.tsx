@@ -63,7 +63,7 @@ export const BioSlide = () => (
             My Attention Comparison Score
           </p>
 
-          <div className="relative mt-6">
+          <div className="relative mt-14">
             <div className="h-6 w-full rounded-full border border-border bg-gradient-to-r from-primary via-muted to-muted/30" />
 
             {/* The zero line: the boundary between the two samples */}
@@ -74,7 +74,7 @@ export const BioSlide = () => (
 
             {/* The marker: where my score landed */}
             <div
-              className="absolute -top-14 flex -translate-x-1/2 flex-col items-center"
+              className="absolute -top-8 flex -translate-x-1/2 flex-col items-center"
               style={{ left: `${MARKER_PCT}%` }}
             >
               <svg viewBox="0 0 24 16" className="h-5 w-7 text-primary" aria-hidden="true">
