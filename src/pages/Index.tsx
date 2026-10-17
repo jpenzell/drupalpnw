@@ -140,7 +140,7 @@ import { EnsembleSizeSlide } from "@/components/screens/penske/EnsembleSizeSlide
 const screens = [
   // ============ OPENING ============
   { id: "S1", title: "Opening", component: TitleSlide,
-    notes: "Welcome the Minnesota Chapter of ISPI and Digital Learning Forum. Curtain up. MFA + MBA, 20 years watching scenes that wouldn't land — in rehearsal rooms and learning organizations. Theater has been working on what you face with AI for centuries." },
+    notes: "Welcome the BCIT Downtown room. Curtain up. Every team, product, and organization is shaped by invisible cognitive assumptions — and the people struggling have already learned to work around us. MFA + MBA, 20 years of theater directing, Amazon/Zillow/Skillsoft, and a late diagnosis of my own. Today is not a lecture about neurodiversity: it's a set of live experiments you are inside of." },
 
 
   // ============ ACT 1 — THE PROBLEM IS HUMAN ============
@@ -437,7 +437,7 @@ const screens = [
       <SimpleTextSlide
         eyebrow="Appendix"
         primary="Legacy slides below."
-        secondary="Originals from the Rehearsing the Future deck — kept for reference."
+        secondary="Originals from earlier decks — kept for reference."
       />
     ), notes: "Everything past this point is the original deck, untouched." },
 
@@ -507,6 +507,49 @@ const screens = [
 ];
 
 
+// Screens the 45-minute path can drop when the room runs long. Nothing is
+// removed from the delivered order (S1 → S29); this list only badges them in
+// the presenter chrome so "skip if short on time" is visible at a glance.
+const SPARE_IDS = new Set([
+  "A0-zoox",
+  "L-S3a",
+  "LD1.95",
+  "L-S3a3b",
+  "A1-4b",
+  "A1-5",
+  "A1-4d",
+  "A1-3e",
+  "L-S3a3d",
+  "L-S3a4",
+  "L-S3a3c",
+  "A2-5b",
+  "A2-7",
+  "A3-1-1b",
+  "A3-1-1c",
+  "A3-1-1d",
+  "A3-1-2",
+  "A3-1-2c",
+  "A3-2-1b",
+  "C5-observer-intro-video",
+  "C5-observer",
+  "A3-2-2",
+  "A3-2-3",
+  "A3-2-3b",
+  "A3-2-4",
+  "A3-3-2",
+  "A3-3-2b",
+  "A3-3-3",
+  "A3-3-7",
+  "P-HANDOFF",
+  "A4-NOTE",
+  "A4-IMAGINE",
+]);
+
+const screensWithFlags = screens.map((screen) => ({
+  ...screen,
+  spare: SPARE_IDS.has(screen.id),
+}));
+
 const Index = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showJoinScreen, setShowJoinScreen] = useState(false);
@@ -517,7 +560,7 @@ const Index = () => {
 
   const { session, isParticipant, createSession, authReady, isLoading } = useSession();
 
-  const filteredScreens = useMemo(() => screens, []);
+  const filteredScreens = useMemo(() => screensWithFlags, []);
 
   const params = new URLSearchParams(window.location.search);
   const joinParam = params.get("join");
@@ -637,8 +680,10 @@ const Index = () => {
         totalScreens={filteredScreens.length}
         currentIndex={currentIndex}
         onNavigate={setCurrentIndex}
-        title="Rehearsing the Future"
-        duration={60}
+        title="AI for All Minds"
+        duration={45}
+        spare={filteredScreens[currentIndex]?.spare}
+        sparesRemaining={filteredScreens.slice(currentIndex).filter((s) => s.spare).length}
         notes={filteredScreens[currentIndex]?.notes}
         mode={mode as "presenter" | "participant" | "present"}
       >
