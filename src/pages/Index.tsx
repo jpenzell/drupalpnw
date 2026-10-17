@@ -157,7 +157,7 @@ const screens = [
   { id: "AM-ball", title: "Picture a Ball", component: () => (
       <LiveChoicePoll
         pollKey="am-ball"
-        stageOnly="Close your eyes. Picture a ball."
+        stageOnly="Picture a ball on a table."
         question="Can you tell me the color of the ball?"
         options={["Yes, very clearly", "Somewhat", "What color?"]}
         showJoinQR
