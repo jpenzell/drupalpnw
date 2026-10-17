@@ -88,7 +88,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
         {image && <img src={image} alt={imageAlt ?? ""} className="w-full max-h-[70vh] object-contain" />}
         <div className="space-y-5">
           {kicker && <p className="slide-kicker text-secondary font-semibold">{kicker}</p>}
-          <h1 className={`${stageOnly ? "slide-title" : "text-6xl leading-[1.05]"} font-display font-bold text-foreground`}>{stageOnly ?? question}</h1>
+          <h1 className={`${stageOnly ? "slide-title" : ((question?.length ?? 0) > 60 ? "text-5xl leading-[1.1]" : "text-6xl leading-[1.05]")} font-display font-bold text-foreground`}>{stageOnly ?? question}</h1>
           {prompt && !stageOnly && <p className="text-3xl text-foreground/75">{prompt}</p>}
           {!stageOnly && <><div className="space-y-3">
             {options.map((o) => {
