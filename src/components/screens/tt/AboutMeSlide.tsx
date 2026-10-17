@@ -150,6 +150,9 @@ export const AboutMeSlide = ({ isActive = true }: AboutMeSlideProps) => {
                 Josh Penzell
               </h1>
               <p className="slide-caption text-muted-foreground italic">MBA · MFA · Director</p>
+              <p className="slide-chrome text-muted-foreground mt-2 max-w-xs mx-auto">
+                20 years of theater directing · Amazon · Zillow · Skillsoft · late diagnosis
+              </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-2 max-w-xs">

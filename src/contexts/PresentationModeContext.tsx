@@ -2,18 +2,24 @@ import { createContext, useContext, ReactNode } from "react";
 
 interface PresentationModeContextType {
   presentationTitle: string;
+  presentationSubtitle: string;
   presenterName: string;
   presenterCompany: string;
   eventName: string;
+  eventWhere: string;
+  eventWhen: string;
 }
 
 const PresentationModeContext = createContext<PresentationModeContextType | undefined>(undefined);
 
 const contextValue: PresentationModeContextType = {
-  presentationTitle: "Rehearsing the Future",
+  presentationTitle: "AI for All Minds",
+  presentationSubtitle: "How cognitive diversity creates blind spots and breakthroughs",
   presenterName: "Josh Penzell",
   presenterCompany: "Imagination Applied",
-  eventName: "Minnesota Chapter of ISPI · Digital Learning Forum",
+  eventName: "Keynote · BCIT Downtown · Room 280",
+  eventWhere: "BCIT Downtown · Room 280",
+  eventWhen: "Saturday, October 17, 2026 · 11:30 a.m.–12:15 p.m.",
 };
 
 export const PresentationModeProvider = ({ children }: { children: ReactNode }) => {

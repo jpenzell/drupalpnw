@@ -3,29 +3,31 @@ import { QRCodeSVG } from "qrcode.react";
 import { ZenBackdrop } from "../ZenBackdrop";
 import curtainCall from "@/assets/zen/curtain-call.jpg";
 import { getPublicOrigin } from "@/lib/publicUrl";
+import { usePresentationMode } from "@/contexts/PresentationModeContext";
 
 export const FinalSlide = () => {
   const connectUrl = `${getPublicOrigin()}/connect`;
+  const { eventWhere } = usePresentationMode();
 
 
   return (
     <ZenBackdrop image={curtainCall} overlay="heavy" kenBurns alt="Stage curtain call under warm spotlights">
       <div className="w-full h-full flex items-center justify-center px-16 py-12">
-        <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-[1fr_auto] gap-12 items-center">
+        <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-[1.25fr_auto] gap-12 items-center">
           {/* Left: headline + signature */}
           <div className="space-y-6 text-left">
             <p className="slide-kicker text-secondary">Curtain call</p>
             <h2 className="slide-title font-display font-bold text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.85)]">
-              Now go imagine.
+              One change on Monday.
             </h2>
             <p className="slide-body text-white/85 italic drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)]">
-              Rehearse the future of the learning you design — together.
+              Structured freedom. Curb-cut design.
             </p>
             <p className="slide-body text-white/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)]">
               Josh Penzell · Imagination Applied
             </p>
-            <p className="slide-caption text-white/65 uppercase tracking-[0.12em]">
-              Minnesota Chapter of ISPI · Digital Learning Forum
+            <p className="slide-caption text-white/65 uppercase tracking-[0.12em] whitespace-nowrap">
+              {eventWhere}
             </p>
           </div>
 

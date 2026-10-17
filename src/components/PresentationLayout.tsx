@@ -34,6 +34,8 @@ interface PresentationLayoutProps {
   title: string;
   duration?: number;
   notes?: string;
+  spare?: boolean;
+  sparesRemaining?: number;
   mode?: "presenter" | "participant" | "present";
 }
 
@@ -46,6 +48,8 @@ export const PresentationLayout = ({
   title,
   duration = 60,
   notes,
+  spare = false,
+  sparesRemaining = 0,
   mode = "presenter",
 }: PresentationLayoutProps) => {
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -274,6 +278,11 @@ export const PresentationLayout = ({
             <span className="text-sm text-muted-foreground">
               {currentIndex + 1} / {totalScreens}
             </span>
+            {spare && (
+              <span className="text-xs uppercase tracking-wider text-spotlight border border-spotlight/40 bg-spotlight/10 rounded-full px-3 py-1">
+                Spare · skip if short
+              </span>
+            )}
             <ModeSelector currentMode={mode} />
 
             {isPresenter && !session && (
@@ -417,7 +426,14 @@ export const PresentationLayout = ({
           <Button variant="outline" size="lg" onClick={() => onNavigate(currentIndex - 1)} disabled={currentIndex === 0} className="font-semibold">
             <ChevronLeft className="h-4 w-4 mr-2" />Previous
           </Button>
-          <span className="text-sm font-mono text-muted-foreground bg-muted px-4 py-2 rounded-full">{currentScreen}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-mono text-muted-foreground bg-muted px-4 py-2 rounded-full">{currentScreen}</span>
+            {sparesRemaining > 0 && (
+              <span className="text-xs uppercase tracking-wider text-spotlight">
+                {sparesRemaining} spare{sparesRemaining === 1 ? "" : "s"} left
+              </span>
+            )}
+          </div>
           <Button size="lg" onClick={() => onNavigate(currentIndex + 1)} disabled={currentIndex === totalScreens - 1} className="font-semibold">
             Next<ChevronRight className="h-4 w-4 ml-2" />
           </Button>
