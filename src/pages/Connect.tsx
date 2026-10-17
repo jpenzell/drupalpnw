@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
+import { Button } from "@/components/ui/button";
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/josh-penzell/";
 
@@ -19,7 +20,7 @@ const schema = z.object({
   note: z.string().trim().max(1000).optional(),
 });
 
-const Connect = () => {
+const Connect = ({ embedded = false }: { embedded?: boolean }) => {
   const { presentationTitle } = usePresentationMode();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -102,7 +103,7 @@ const Connect = () => {
 
   if (submitted) {
     return (
-      <main className="min-h-screen bg-background flex items-center justify-center px-6 py-12">
+      <main className={`${embedded ? "py-8" : "min-h-screen px-6 py-12"} bg-background flex items-center justify-center`}>
         <div className="max-w-md w-full text-center space-y-6">
           <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
             <Check className="w-8 h-8 text-primary" />
@@ -116,6 +117,8 @@ const Connect = () => {
           {!linkedinClicked && (
             <a
               href={LINKEDIN_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-primary underline-offset-4 hover:underline"
             >
               <Linkedin className="w-4 h-4" /> Connect on LinkedIn
@@ -127,7 +130,7 @@ const Connect = () => {
   }
 
   return (
-    <main className="min-h-screen bg-background px-5 py-10">
+    <main className={`${embedded ? "py-6" : "min-h-screen px-5 py-10"} bg-background`}>
       <div className="max-w-md mx-auto space-y-8">
         <header className="space-y-2 text-center">
           <p className="text-sm uppercase tracking-widest text-primary font-semibold">
@@ -143,6 +146,8 @@ const Connect = () => {
 
         <a
           href={LINKEDIN_URL}
+          target="_blank"
+          rel="noopener noreferrer"
           onClick={() => setLinkedinClicked(true)}
           className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-colors ${
             linkedinClicked
@@ -254,7 +259,7 @@ const Connect = () => {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={submitting}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-lg shadow-lg hover:opacity-90 transition-opacity disabled:opacity-60"
@@ -266,7 +271,7 @@ const Connect = () => {
             ) : (
               "Send to Josh"
             )}
-          </button>
+          </Button>
 
           <p className="text-xs text-muted-foreground text-center">
             Your details go directly to Josh. No newsletter, no sharing.
