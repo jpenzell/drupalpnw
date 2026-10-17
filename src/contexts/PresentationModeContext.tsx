@@ -9,6 +9,8 @@ interface PresentationModeContextType {
   eventWhen: string;
 }
 
+const PresentationModeContext = createContext<PresentationModeContextType | undefined>(undefined);
+
 const contextValue: PresentationModeContextType = {
   presentationTitle: "AI for All Minds",
   presentationSubtitle: "How cognitive diversity creates blind spots and breakthroughs",
