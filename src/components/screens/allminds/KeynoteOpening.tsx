@@ -16,7 +16,7 @@ export const KeynoteTitleScreen = () => {
 export const KeynoteSponsorScreen = () => (
   <main
     aria-label="Thank you to our sponsors"
-    className="flex-1 min-h-0 h-full w-full qr-paper flex items-center justify-center overflow-hidden"
+    className="relative flex-1 min-h-0 h-full w-full qr-paper flex items-center justify-center overflow-hidden"
   >
     <img
       src={sponsorSlideImage}
@@ -25,5 +25,8 @@ export const KeynoteSponsorScreen = () => (
       loading="eager"
       draggable={false}
     />
+    <div className="absolute bottom-6 right-6 z-10 scale-90 origin-bottom-right">
+      <JoinQRCard size={200} />
+    </div>
   </main>
 );
