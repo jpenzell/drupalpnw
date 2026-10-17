@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Linkedin, Presentation, Coffee, Check, Loader2 } from "lucide-react";
+import { Linkedin, Presentation, Coffee, Check, Loader2, ArrowUpRight } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,6 +7,20 @@ import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { Button } from "@/components/ui/button";
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/josh-penzell/";
+const ACADEMY_URL = "https://www.specialolympics.org/what-we-do/youth-and-schools/global-center-for-inclusion-in-education/unified-champion-schools-inclusion-academy";
+
+const AcademyExample = () => (
+  <section className="border-t border-border pt-6 text-left space-y-3">
+    <p className="text-xs uppercase tracking-widest text-secondary font-semibold">Inclusion in practice</p>
+    <h2 className="text-xl font-display font-semibold text-foreground">Special Olympics Inclusion Academy</h2>
+    <p className="text-sm text-muted-foreground">An applied example: the Unified Champion Schools® Inclusion Academy.</p>
+    <Button variant="outline" asChild className="w-full gap-2">
+      <a href={ACADEMY_URL} target="_blank" rel="noopener noreferrer">
+        Explore the Academy <ArrowUpRight className="w-4 h-4 shrink-0" />
+      </a>
+    </Button>
+  </section>
+);
 
 const schema = z.object({
   name: z.string().trim().max(100).optional(),
@@ -124,6 +138,7 @@ const Connect = ({ embedded = false }: { embedded?: boolean }) => {
               <Linkedin className="w-4 h-4" /> Connect on LinkedIn
             </a>
           )}
+          <AcademyExample />
         </div>
       </main>
     );
@@ -277,6 +292,7 @@ const Connect = ({ embedded = false }: { embedded?: boolean }) => {
             Your details go directly to Josh. No newsletter, no sharing.
           </p>
         </form>
+        <AcademyExample />
       </div>
     </main>
   );
