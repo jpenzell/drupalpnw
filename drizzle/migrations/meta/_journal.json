@@ -15,6 +15,13 @@
       "when": 1792255047725,
       "tag": "0001_enable_realtime_on_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792257312148,
+      "tag": "0002_anon_participation_rls",
+      "breakpoints": true
     }
   ]
 }

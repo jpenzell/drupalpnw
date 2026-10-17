@@ -48,10 +48,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
   const [authUser, setAuthUser] = useState<User | null>(null);
+  const [fallbackId, setFallbackId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
-  // The participant ID is now auth.uid()
-  const participantId = authUser?.id ?? "";
+  // The participant ID is auth.uid() when sign-in succeeded, or a locally
+  // generated id when it did not — anonymous sign-up is rate-limited per IP
+  // and a full room shares one venue IP, so joining must not depend on it.
+  const participantId = authUser?.id ?? fallbackId ?? "";
 
   // Auto sign-in anonymously on mount
   useEffect(() => {
@@ -64,12 +67,26 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Sign in anonymously
-      const { data, error: signInError } = await supabase.auth.signInAnonymously();
-      if (signInError) {
-        console.error("Anonymous sign-in failed:", signInError);
-      } else if (data.user) {
-        setAuthUser(data.user);
+      // Sign in anonymously, retrying briefly against the rate limit
+      let signInError: unknown = null;
+      let user: User | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (!error) { user = data.user; break; }
+        signInError = error;
+        if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      }
+
+      if (user) {
+        setAuthUser(user);
+      } else {
+        if (signInError) console.error("Anonymous sign-in failed:", signInError);
+        let stored = localStorage.getItem("am_participant_id");
+        if (!stored) {
+          stored = crypto.randomUUID();
+          localStorage.setItem("am_participant_id", stored);
+        }
+        setFallbackId(stored);
       }
       setAuthReady(true);
     };
@@ -124,6 +141,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [session?.id, participantId, isPresenter]);
 
   const createSession = useCallback(async (): Promise<Session | null> => {
+    if (!authUser) {
+      setError("Sign-in is still starting — try again in a moment.");
+      return null;
+    }
     if (!participantId) return null;
     setIsLoading(true);
     setError(null);
