@@ -348,8 +348,8 @@ const screens = [
   { id: "LD1.95", title: "LLMs Predict, They Don't Know — Anthropic", component: ProbabilisticExplainerScreen,
     notes: "Anthropic's explainer on probabilistic AI. Treat outputs as drafts to coach, not finished truth." },
 
-  { id: "A1-3b", title: "Probability Words — Cycling", component: ProbabilityWordsPollScreen,
-    notes: "Phrases cycle on screen. Ask people to drop the % they hear in the chat for each one. The spread in the chat IS the point — and it is the same spread hidden inside words like likely, proficient, and ready." },
+  { id: "A1-3b", title: "Probability Words — Live Percentages", component: ProbabilityWordsPollScreen,
+    notes: "Ask participants to submit a percentage for Slam dunk and Rarely on their phones. The live averages, ranges, and individual answer marks show the spread hidden inside words like likely, proficient, and ready." },
 
   { id: "A1-3c", title: "Annie Duke — Same Words, Different Meanings", component: AnnieDukeStudyScreen,
     notes: "CIA's Sherman Kent 1964 + Mauboussin/Duke replication. 'Serious possibility' = 20% to 80%." },
