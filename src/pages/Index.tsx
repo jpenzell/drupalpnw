@@ -675,7 +675,7 @@ const RUN_ORDER = [
   // Language shapes how we think
   "A1-3c", "A1-3d", "L-S3a3b", "A1-4b",
   // Trained on language → humans are diverse, so is AI
-  "L-S3a3d", "AM-diverse", "L-S3a2-q", "LD1.85", "L-S3a2b", "LD1.95",
+  "L-S3a3d", "AM-diverse", "L-S3a2b", "LD1.95",
   // Individual vs environment → culture
   "AM-env", "A1-5", "A1-4d", "A1-3e", "AM-role", "L-S3a4", "L-S3a3c",
   // The problem: built for the majority, AI makes it variable
