@@ -177,14 +177,24 @@ const screens = [
     notes: "Aphantasia: little or no voluntary mental imagery. Term coined by Adam Zeman (2015); estimates are roughly 1 in 25 to 1 in 50 people — say it as an estimate. Walk left to right: same word, same ball, four very different inner screens. People on the right still know what a ball is — they just don't see it." },
   { id: "AM-visualize", title: "How Often We Say It", component: VisualizePhrasesScreen,
     notes: "Visualize, picture this, mind map, count sheep. We say these constantly — at work, in training, at bedtime — and each one assumes a mind's eye that some of the room doesn't have." },
-  { id: "AM-voice", title: "Inner Voice — Poll", component: () => (
+  { id: "AM-voice", "AM-voice-results", title: "Inner Voice — Poll", component: () => (
+      <LiveChoicePoll
+        pollKey="am-voice"
+        kicker="Experiment 2"
+        stageOnly="When you read this sentence, do you hear it?"
+        question="When you read this sentence, do you hear it?"
+        prompt="An inner voice reading along in your head."
+        options={["Always — clear as speech", "Sometimes", "Rarely", "Never — it's silent in there"]}
+        showJoinQR
+      />
+    ), notes: "Same with inner voice. Let the poll fill. Find the 'never' people — the room usually gasps." },
+{ id: "AM-voice-results", title: "Inner Voice — Results", component: () => (
       <LiveChoicePoll
         pollKey="am-voice"
         kicker="Experiment 2"
         question="When you read this sentence, do you hear it?"
         prompt="An inner voice reading along in your head."
         options={["Always — clear as speech", "Sometimes", "Rarely", "Never — it's silent in there"]}
-        showJoinQR
       />
     ), notes: "Same with inner voice. Let the poll fill. Find the 'never' people — the room usually gasps." },
   { id: "AM-voice-reveal", title: "No Inner Voice", component: () => (
@@ -193,7 +203,19 @@ const screens = [
   { id: "AM-aware", title: "We All Think Differently", component: () => (
       <SimpleTextSlide primary="We all think differently." tertiary="Are you aware of how much?" />
     ), notes: "THE LINE. Pause. This is the frame for everything after." },
-  { id: "AM-duck", title: "Duck or Rabbit — Poll", component: () => (
+  { id: "AM-duck", "AM-duck-results", title: "Duck or Rabbit — Poll", component: () => (
+      <LiveChoicePoll
+        pollKey="am-duck"
+        kicker="Views of the world"
+        stageOnly="What do you see?"
+        question="What do you see?"
+        options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
+        image={duckRabbit}
+        imageAlt="Duck-rabbit illusion"
+        showJoinQR
+      />
+    ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
+{ id: "AM-duck-results", title: "Duck or Rabbit — Results", component: () => (
       <LiveChoicePoll
         pollKey="am-duck"
         kicker="Views of the world"
@@ -201,7 +223,6 @@ const screens = [
         options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
         image={duckRabbit}
         imageAlt="Duck-rabbit illusion"
-        showJoinQR
       />
     ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
   { id: "AM-1000", title: "Worth a Thousand Words?", component: () => (
@@ -237,14 +258,24 @@ const screens = [
     notes: "Click 'Start the ramp'. The screen gets busier over 30 seconds (no flashing). Phones tap 'That's my limit'. Point at the spread: same room, same screen, very different thresholds. Tell people they can look away." },
   { id: "AM-reflect", title: "Designing for Your Own Brain", component: ReflectionWall,
     notes: "Optional reflection. Answers stay hidden until you click Show answers — read before revealing." },
-  { id: "AM-curb-q", title: "Curb Cut — Poll", component: () => (
+  { id: "AM-curb-q", "AM-curb-q-results", title: "Curb Cut — Poll", component: () => (
+      <LiveChoicePoll
+        pollKey="am-curb"
+        kicker="The curb-cut principle"
+        stageOnly="Captions were built for deaf and hard-of-hearing viewers. Who uses them today?"
+        question="Captions were built for deaf and hard-of-hearing viewers."
+        prompt="Who uses them today?"
+        options={["Mostly deaf and hard-of-hearing viewers", "About half and half", "Mostly people who can hear fine"]}
+        showJoinQR
+      />
+    ), notes: "Poll, then: most caption users are hearing — noisy rooms, second languages, quiet phones, focus. [Cite your preferred source aloud.]" },
+{ id: "AM-curb-q-results", title: "Curb Cut — Results", component: () => (
       <LiveChoicePoll
         pollKey="am-curb"
         kicker="The curb-cut principle"
         question="Captions were built for deaf and hard-of-hearing viewers."
         prompt="Who uses them today?"
         options={["Mostly deaf and hard-of-hearing viewers", "About half and half", "Mostly people who can hear fine"]}
-        showJoinQR
       />
     ), notes: "Poll, then: most caption users are hearing — noisy rooms, second languages, quiet phones, focus. [Cite your preferred source aloud.]" },
   { id: "AM-curb", title: "The Curb-Cut Principle", component: () => (
