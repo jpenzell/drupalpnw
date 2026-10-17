@@ -684,9 +684,9 @@ const RUN_ORDER = [
   // The problem: built for the majority, AI makes it variable
   "AM-bell", "AM-personas", "AM-reflect", "AM-curb-q", "AM-curb", "AM-variable", "A0-zoox", "A0-reframe",
   // Theater is the answer
-  "AM-theater", "A3-1-2", "A3-1-2c", "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
+  "AM-theater", "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
   "A3-0",
-  "A3-1-1", "A3-1-1b", "A3-1-1c", "A3-1-1d",
+  "A3-1-1", "A3-1-2", "A3-1-2c", "A3-1-1b", "A3-1-1c", "A3-1-1d",
   "A3-2-1", "A3-2-1b", "C5-observer-intro-video", "C5-observer", "A3-2-2", "A3-2-3", "A3-2-3b", "A3-2-4",
   "A3-3-1", "A3-3-1b", "A3-3-2", "A3-3-2b", "A3-3-3", "A3-3-5", "A3-3-7", "P-HANDOFF",
   "A4-SUM", "A4-NOTE",
