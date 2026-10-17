@@ -18,6 +18,7 @@ import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/a
 import { AphantasiaScreen, VisualizePhrasesScreen } from "@/components/screens/allminds/AphantasiaScreen";
 import { PupilStudySlide } from "@/components/screens/allminds/PupilStudySlide";
 import { BioSlide } from "@/components/screens/allminds/BioSlide";
+import { BioTestChartsSlide } from "@/components/screens/allminds/BioTestChartsSlide";
 import { LiveChoicePoll } from "@/components/screens/allminds/LiveChoicePoll";
 import { TimePerceptionExperiment } from "@/components/screens/allminds/TimePerceptionExperiment";
 import { SensoryExperiment } from "@/components/screens/allminds/SensoryExperiment";
@@ -157,6 +158,9 @@ const screens = [
 
   { id: "S1-bio", title: "About Josh", component: BioSlide,
     notes: "Who's standing up here: theater director for the first part of my career, MFA and MBA, and a diagnosis that arrived late. The number on the right is mine, from my own attention test — below zero means it read me the way it reads people independently diagnosed with ADHD. Say 'ADD', the word on my report, not the clinical label. BRIDGE: Now let's find out how the rest of this room works." },
+
+  { id: "S1-bio-tests", title: "My test results", component: BioTestChartsSlide,
+    notes: "These are the four charts from my report, rebuilt for the projector. Red marks the results below the report's normal-limit line at 80; dashed line is borderline at 85. RT variability: 68, 65, 54, 55. Response time: 110, 109, 103, 108. Commission errors: 86, 44, less than 40, 53. Omission errors: 100 throughout. Do not imply every measure was outside normal limits. The report says performance validity criteria were met. BRIDGE: Now let's find out how the rest of this room works." },
 
   // ============ ALL MINDS — presenter outline beats (ordered by RUN_ORDER below) ============
   { id: "AM-ball", title: "Picture a Ball", component: () => (
@@ -716,7 +720,7 @@ const SPARE_IDS = new Set([
 // designed for the bell curve → theater (cast / rehearse / direct) → dream vs imagination.
 // Any screen not listed keeps its original relative position after this list (appendix).
 const RUN_ORDER = [
-  "S0-sponsors", "S1", "S1-bio",
+  "S0-sponsors", "S1", "S1-bio", "S1-bio-tests",
   // We all think differently
 "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-results", "AM-voice-reveal", "AM-time",
   "AM-aware", "AM-pupils",
