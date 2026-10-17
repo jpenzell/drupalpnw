@@ -181,10 +181,20 @@ const screens = [
       <LiveChoicePoll
         pollKey="am-voice"
         kicker="Experiment 2"
+        stageOnly="When you read this sentence, do you hear it?"
         question="When you read this sentence, do you hear it?"
         prompt="An inner voice reading along in your head."
         options={["Always — clear as speech", "Sometimes", "Rarely", "Never — it's silent in there"]}
         showJoinQR
+      />
+    ), notes: "Same with inner voice. Let the poll fill. Find the 'never' people — the room usually gasps." },
+  { id: "AM-voice-results", title: "Inner Voice — Results", component: () => (
+      <LiveChoicePoll
+        pollKey="am-voice"
+        kicker="Experiment 2"
+        question="When you read this sentence, do you hear it?"
+        prompt="An inner voice reading along in your head."
+        options={["Always — clear as speech", "Sometimes", "Rarely", "Never — it's silent in there"]}
       />
     ), notes: "Same with inner voice. Let the poll fill. Find the 'never' people — the room usually gasps." },
   { id: "AM-voice-reveal", title: "No Inner Voice", component: () => (
@@ -197,11 +207,22 @@ const screens = [
       <LiveChoicePoll
         pollKey="am-duck"
         kicker="Views of the world"
+        stageOnly="What do you see?"
         question="What do you see?"
         options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
         image={duckRabbit}
         imageAlt="Duck-rabbit illusion"
         showJoinQR
+      />
+    ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
+  { id: "AM-duck-results", title: "Duck or Rabbit — Results", component: () => (
+      <LiveChoicePoll
+        pollKey="am-duck"
+        kicker="Views of the world"
+        question="What do you see?"
+        options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
+        image={duckRabbit}
+        imageAlt="Duck-rabbit illusion"
       />
     ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
   { id: "AM-1000", title: "Worth a Thousand Words?", component: () => (
@@ -241,10 +262,20 @@ const screens = [
       <LiveChoicePoll
         pollKey="am-curb"
         kicker="The curb-cut principle"
+        stageOnly="Captions were built for deaf and hard-of-hearing viewers. Who uses them today?"
         question="Captions were built for deaf and hard-of-hearing viewers."
         prompt="Who uses them today?"
         options={["Mostly deaf and hard-of-hearing viewers", "About half and half", "Mostly people who can hear fine"]}
         showJoinQR
+      />
+    ), notes: "Poll, then: most caption users are hearing — noisy rooms, second languages, quiet phones, focus. [Cite your preferred source aloud.]" },
+  { id: "AM-curb-q-results", title: "Curb Cut — Results", component: () => (
+      <LiveChoicePoll
+        pollKey="am-curb"
+        kicker="The curb-cut principle"
+        question="Captions were built for deaf and hard-of-hearing viewers."
+        prompt="Who uses them today?"
+        options={["Mostly deaf and hard-of-hearing viewers", "About half and half", "Mostly people who can hear fine"]}
       />
     ), notes: "Poll, then: most caption users are hearing — noisy rooms, second languages, quiet phones, focus. [Cite your preferred source aloud.]" },
   { id: "AM-curb", title: "The Curb-Cut Principle", component: () => (
@@ -675,9 +706,9 @@ const SPARE_IDS = new Set([
 const RUN_ORDER = [
   "S0-sponsors", "S1",
   // We all think differently
-  "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
+  "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-results", "AM-voice-reveal", "AM-aware",
   "AM-time",
-  "AM-duck", "AM-1000", "LD1.92", "L-S3a", "A1-1", "A1-3b",
+  "AM-duck", "AM-duck-results", "AM-1000", "LD1.92", "L-S3a", "A1-1", "A1-3b",
   // Language shapes how we think
   "A1-3c", "A1-3d", "L-S3a3b", "A1-4b",
   // Trained on language → humans are diverse, so is AI
@@ -685,7 +716,7 @@ const RUN_ORDER = [
   // Individual vs environment → culture
   "AM-env", "A1-5", "A1-4d", "A1-3e", "AM-role", "L-S3a3c",
   // The problem: built for the majority, AI makes it variable
-  "AM-bell", "AM-curb", "AM-curb-q", "A0-zoox", "A0-reframe",
+  "AM-bell", "AM-curb", "AM-curb-q", "AM-curb-q-results", "A0-zoox", "A0-reframe",
   // Theater is the answer
   "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
   "A3-0",
