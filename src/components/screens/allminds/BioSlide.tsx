@@ -82,14 +82,14 @@ export const BioSlide = () => (
               </svg>
             </div>
 
-            <div className="relative mt-4 slide-body text-muted-foreground">
-              <span className="absolute left-0">−10 · ADHD sample</span>
-              <span className="absolute left-1/2 -translate-x-1/2">0</span>
-              <span className="absolute right-0">Normative sample · +10</span>
+            <div className="mt-4 grid grid-cols-3 slide-body text-muted-foreground">
+              <span className="justify-self-start">−10 · ADHD sample</span>
+              <span className="justify-self-center">0</span>
+              <span className="justify-self-end">Normative sample · +10</span>
             </div>
           </div>
 
-          <p className="slide-body text-muted-foreground mt-12 leading-snug">
+          <p className="slide-body-lg text-muted-foreground mt-14 leading-snug">
             Below zero means it read my attention the way it reads people
             independently diagnosed with ADHD. It took 39 years to have a name
             for it.
