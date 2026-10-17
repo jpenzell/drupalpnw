@@ -214,8 +214,8 @@ const screens = [
       <SimpleTextSlide primary="Individual differences — or environment?" secondary="Culture. Different languages carry different values." />
     ), notes: "Is it the person or the environment? Culture. Different languages, different values — and the models inherit it." },
   { id: "AM-role", title: "Culture Works as a Role", component: () => (
-      <SimpleTextSlide primary="Culture is so powerful it works as a role." secondary="Not just a language." />
-    ), notes: "Close the first half: tell a model who it is and where it's from and the values move with it. Culture acts like casting." },
+      <SimpleTextSlide primary="Culture is so powerful it works as a role." secondary="Diversity isn't only how minds work — it's where people come from." />
+    ), notes: "Close the first half: the room has watched minds differ; now widen it — where someone grew on shifts what they value, just as strongly. Tell a model who it is and where it's from and the values move with it. Culture acts like casting." },
   { id: "AM-bell", title: "Designed for the Bell Curve", component: () => (
       <SimpleTextSlide eyebrow="The problem" primary="With all these differences, we built for the majority." secondary="The middle of the bell curve. Because we've had to." />
     ), notes: "The problem: with all these differences we've designed what works for the majority — because we had to. One product, one version." },
