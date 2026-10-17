@@ -5,5 +5,5 @@
 
 # Running order
 - [x] Cut AM-duck, AM-duck-results and AM-1000 from the delivered run (appendix only, nothing deleted).
-- [ ] Move AM-pupils to play right after AM-aware.
+- [x] Move AM-pupils to play right after AM-aware.
 - [ ] Publish so the QR destination and today's phone fixes go live.
