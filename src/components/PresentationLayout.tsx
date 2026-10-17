@@ -429,7 +429,7 @@ export const PresentationLayout = ({
           <div className="flex items-center gap-3">
             <span className="text-sm font-mono text-muted-foreground bg-muted px-4 py-2 rounded-full">{currentScreen}</span>
             {sparesRemaining > 0 && (
-              <span className="text-xs uppercase tracking-wider text-spotlight">
+              <span className="text-xs uppercase tracking-wider font-semibold text-foreground bg-spotlight/20 border border-spotlight/45 rounded-full px-3 py-1">
                 {sparesRemaining} spare{sparesRemaining === 1 ? "" : "s"} left
               </span>
             )}
