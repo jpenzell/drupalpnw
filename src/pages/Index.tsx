@@ -16,6 +16,7 @@ import zenStageSpotlight from "@/assets/zen/stage-spotlight.jpg";
 import { TitleSlide } from "@/components/screens/tt/TitleSlide";
 import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/allminds/KeynoteOpening";
 import { AphantasiaScreen, VisualizePhrasesScreen } from "@/components/screens/allminds/AphantasiaScreen";
+import { PupilStudySlide } from "@/components/screens/allminds/PupilStudySlide";
 import { LiveChoicePoll } from "@/components/screens/allminds/LiveChoicePoll";
 import { TimePerceptionExperiment } from "@/components/screens/allminds/TimePerceptionExperiment";
 import { SensoryExperiment } from "@/components/screens/allminds/SensoryExperiment";
@@ -175,6 +176,8 @@ const screens = [
     ), notes: "So many different ways we interacted with one word. Some people: none. That's aphantasia — and most people who have it don't find out until adulthood." },
   { id: "AM-aphantasia", title: "What Aphantasia Looks Like", component: AphantasiaScreen,
     notes: "Aphantasia: little or no voluntary mental imagery. Term coined by Adam Zeman (2015); estimates are roughly 1 in 25 to 1 in 50 people — say it as an estimate. Walk left to right: same word, same ball, four very different inner screens. People on the right still know what a ball is — they just don't see it." },
+  { id: "AM-pupils", title: "The Body Keeps Score", component: PupilStudySlide,
+    notes: "Kay, Keogh, Andrillon & Pearson (2022), eLife: imagers' pupils constricted to imagined bright shapes and dilated to imagined dark ones, and the effect grew with reported vividness; aphantasics showed no imagery pupil response at all — while their pupils still responded normally to real light and to cognitive load. So nothing is wrong with the eye; the body simply isn't being shown anything. First physiological validation of aphantasia. The original effect is Laeng & Sulutvedt (2014), 'The Eye Pupil Adjusts to Imaginary Light'. [Adjust the landing line to your own wording.]" },
   { id: "AM-visualize", title: "How Often We Say It", component: VisualizePhrasesScreen,
     notes: "Visualize, picture this, mind map, count sheep. We say these constantly — at work, in training, at bedtime — and each one assumes a mind's eye that some of the room doesn't have." },
   { id: "AM-voice", title: "Inner Voice — Poll", component: () => (
@@ -709,7 +712,7 @@ const SPARE_IDS = new Set([
 const RUN_ORDER = [
   "S0-sponsors", "S1",
   // We all think differently
-"AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-results", "AM-voice-reveal", "AM-time",
+"AM-ball", "AM-ball-results", "AM-aphantasia", "AM-pupils", "AM-visualize", "AM-voice", "AM-voice-results", "AM-voice-reveal", "AM-time",
   "AM-aware",
   "AM-duck", "AM-duck-results", "AM-1000", "L-S3a", "LD1.92", "A1-3b",
   // Language shapes how we think
