@@ -25,8 +25,8 @@ export const KeynoteSponsorScreen = () => (
       loading="eager"
       draggable={false}
     />
-    <div className="absolute bottom-6 right-6 z-10 scale-90 origin-bottom-right">
-      <JoinQRCard size={200} />
+    <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10 scale-90 origin-right">
+      <JoinQRCard size={150} />
     </div>
   </main>
 );
