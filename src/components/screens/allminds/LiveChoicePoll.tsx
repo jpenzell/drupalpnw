@@ -83,18 +83,18 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center px-16 animate-fade-in">
+    <div className="flex-1 flex items-center justify-center px-16 py-14 animate-fade-in">
       <div className={`w-full max-w-7xl grid gap-16 items-center ${image ? (showJoinQR && session ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-2") : showJoinQR && session ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
         {image && <img src={image} alt={imageAlt ?? ""} className="w-full max-h-[70vh] object-contain" />}
-        <div className="space-y-8">
+        <div className="space-y-5">
           {kicker && <p className="slide-kicker text-secondary font-semibold">{kicker}</p>}
-          <h1 className="slide-title font-display font-bold text-foreground">{stageOnly ?? question}</h1>
-          {prompt && !stageOnly && <p className="slide-body-lg text-foreground/75">{prompt}</p>}
-          {!stageOnly && <><div className="space-y-4">
+          <h1 className={`${stageOnly ? "slide-title" : "text-6xl leading-[1.05]"} font-display font-bold text-foreground`}>{stageOnly ?? question}</h1>
+          {prompt && !stageOnly && <p className="text-3xl text-foreground/75">{prompt}</p>}
+          {!stageOnly && <><div className="space-y-3">
             {options.map((o) => {
               const pct = total ? Math.round((counts[o] / total) * 100) : 0;
               return (
-                <div key={o} className="relative overflow-hidden rounded-xl border-2 border-border bg-card px-6 py-4">
+                <div key={o} className="relative overflow-hidden rounded-xl border-2 border-border bg-card px-6 py-3">
                   <div className="absolute inset-y-0 left-0 bg-primary/15 transition-all duration-700" style={{ width: `${pct}%` }} />
                   <div className="relative flex items-center justify-between gap-6">
                     <span className="slide-body font-semibold text-foreground">{o}</span>
