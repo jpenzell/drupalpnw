@@ -15,6 +15,8 @@ import zenStageSpotlight from "@/assets/zen/stage-spotlight.jpg";
 // Reusable framework slides
 import { TitleSlide } from "@/components/screens/tt/TitleSlide";
 import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/allminds/KeynoteOpening";
+import { LiveChoicePoll } from "@/components/screens/allminds/LiveChoicePoll";
+import duckRabbit from "@/assets/duck-rabbit.png";
 import { AboutMeSlide } from "@/components/screens/tt/AboutMeSlide";
 import { PartnerExerciseSlide } from "@/components/screens/tt/PartnerExerciseSlide";
 
@@ -146,6 +148,75 @@ const screens = [
     notes: "A real thank-you to the sponsors who made this summit happen. Organizer artwork shown unchanged. BRIDGE: Now, who's speaking today." },
   { id: "S1", title: "Opening", component: TitleSlide,
     notes: "Welcome the BCIT Downtown room. Curtain up. Every team, product, and organization is shaped by invisible cognitive assumptions — and the people struggling have already learned to work around us. MFA + MBA, 20 years of theater directing, Amazon/Zillow/Skillsoft, and a late diagnosis of my own. Today is not a lecture about neurodiversity: it's a set of live experiments you are inside of." },
+
+  // ============ ALL MINDS — presenter outline beats (ordered by RUN_ORDER below) ============
+  { id: "AM-ball", title: "Picture a Ball — Poll", component: () => (
+      <LiveChoicePoll
+        pollKey="am-ball"
+        kicker="Experiment 1"
+        question="Close your eyes. Picture a ball."
+        prompt="What did you actually see?"
+        options={["Vivid — color, texture, maybe it moved", "A clear shape", "Faint or fuzzy", "Nothing — I just knew the idea"]}
+      />
+    ), notes: "Picture-a-ball audience survey. Give them 5 seconds eyes closed. Then the poll. Ask a few people: what color? Was it moving? Did anyone see nothing at all?" },
+  { id: "AM-ball-reveal", title: "So Many Ways", component: () => (
+      <SimpleTextSlide eyebrow="What just happened" primary="One word. So many different balls." secondary="And some of us saw no ball at all." />
+    ), notes: "So many different ways we interacted with one word. Some people: none. That's aphantasia — and most people who have it don't find out until adulthood." },
+  { id: "AM-voice", title: "Inner Voice — Poll", component: () => (
+      <LiveChoicePoll
+        pollKey="am-voice"
+        kicker="Experiment 2"
+        question="When you read this sentence, do you hear it?"
+        prompt="An inner voice reading along in your head."
+        options={["Always — clear as speech", "Sometimes", "Rarely", "Never — it's silent in there"]}
+      />
+    ), notes: "Same with inner voice. Let the poll fill. Find the 'never' people — the room usually gasps." },
+  { id: "AM-voice-reveal", title: "No Inner Voice", component: () => (
+      <SimpleTextSlide eyebrow="Wow" primary="Some of us have no inner voice." secondary="And we've been sitting in the same meetings the whole time." />
+    ), notes: "Wow — no inner voice. Let it land before moving on." },
+  { id: "AM-aware", title: "We All Think Differently", component: () => (
+      <SimpleTextSlide primary="We all think differently." tertiary="Are you aware of how much?" />
+    ), notes: "THE LINE. Pause. This is the frame for everything after." },
+  { id: "AM-duck", title: "Duck or Rabbit — Poll", component: () => (
+      <LiveChoicePoll
+        pollKey="am-duck"
+        kicker="Views of the world"
+        question="What do you see?"
+        options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
+        image={duckRabbit}
+        imageAlt="Duck-rabbit illusion"
+      />
+    ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
+  { id: "AM-1000", title: "Worth a Thousand Words?", component: () => (
+      <SimpleTextSlide primary="A picture is worth a thousand words." tertiary="Whose thousand words?" />
+    ), notes: "Bridge into language. If we don't even see the same picture, we certainly don't use the same words for it. Language shapes how we think." },
+  { id: "AM-diverse", title: "Humans Are Diverse. So Is AI.", component: () => (
+      <SimpleTextSlide eyebrow="So" primary="Humans are diverse." tertiary="So is AI." />
+    ), notes: "Trained on language; language is subjective. Humans are diverse — so is AI. Different models, different answers." },
+  { id: "AM-env", title: "Individual or Environment?", component: () => (
+      <SimpleTextSlide primary="Individual differences — or environment?" secondary="Culture. Different languages carry different values." />
+    ), notes: "Is it the person or the environment? Culture. Different languages, different values — and the models inherit it." },
+  { id: "AM-role", title: "Culture Works as a Role", component: () => (
+      <SimpleTextSlide primary="Culture is so powerful it works as a role." secondary="Not just a language." />
+    ), notes: "Close the first half: tell a model who it is and where it's from and the values move with it. Culture acts like casting." },
+  { id: "AM-bell", title: "Designed for the Bell Curve", component: () => (
+      <SimpleTextSlide eyebrow="The problem" primary="With all these differences, we built for the majority." secondary="The middle of the bell curve. Because we've had to." />
+    ), notes: "The problem: with all these differences we've designed what works for the majority — because we had to. One product, one version." },
+  { id: "AM-personas", title: "Choosing Personas", component: () => (
+      <SimpleTextSlide primary="Empathizing with the end user means choosing personas." secondary="Three. Maybe five. Everyone else learns to work around us." />
+    ), notes: "Design thinking: empathize with the end user — which in practice means picking X personas." },
+  { id: "AM-variable", title: "AI Makes It Variable", component: () => (
+      <SimpleTextSlide primary="Put AI into anything — and it becomes variable." secondary="And people want that flexibility." />
+    ), notes: "Putting AI into anything means it's no longer one version. Further: people want that flexibility. Good and bad — next." },
+  { id: "AM-sharing", title: "Not Sharing — Good and Bad", component: () => (
+      <SimpleTextSlide primary="On our own, we stop sharing." secondary="Because we don't have to." tertiary="Good and bad." />
+    ), notes: "[PRESENTER: name the study here — people working independently with AI stop sharing beyond themselves.] Then Doshi & Hauser: individually more creative, collectively more alike." },
+  { id: "AM-theater", title: "Theater Is the Answer", component: () => (
+      <SimpleTextSlide eyebrow="So" primary="Theater is the answer." secondary="Creative people, working together, to be more creative." backdropImage={zenStageSpotlight} />
+    ), notes: "Theater is the answer: creative people gathering to be more creative together. Then Uzzi, then the three rooms: casting, rehearsal, directing — rehearsing the future." },
+  { id: "AM-dream", title: "Dream vs. Imagination", component: () => (
+      <SimpleTextSlide primary="A dream happens to you." tertiary="Imagination is something you direct." />
+    ), notes: "Come back around: dream vs imagination. Then: dream big enough for AI. [Adjust this line to your own wording.]" },
 
 
   // ============ ACT 1 — THE PROBLEM IS HUMAN ============
