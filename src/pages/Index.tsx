@@ -673,7 +673,7 @@ const SPARE_IDS = new Set([
 // designed for the bell curve → theater (cast / rehearse / direct) → dream vs imagination.
 // Any screen not listed keeps its original relative position after this list (appendix).
 const RUN_ORDER = [
-  "S0", "S0-sponsors", "S1",
+  "S0-sponsors", "S1",
   // We all think differently
   "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
   "AM-time",
