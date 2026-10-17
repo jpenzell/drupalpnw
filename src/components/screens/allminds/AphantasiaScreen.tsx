@@ -32,3 +32,18 @@ export const AphantasiaScreen = () => (
     </div>
   </div>
 );
+
+const PHRASES = ["“Visualize the end state…”", "“Picture this…”", "“Write out a mind map.”", "“Count sheep.”", "“In your mind's eye…”", "“Imagine the customer…”", "“See the big picture.”", "“Close your eyes and imagine…”"];
+
+/** Everyday instructions that quietly assume a mind's eye. */
+export const VisualizePhrasesScreen = () => (
+  <div className="flex-1 flex flex-col justify-center gap-12 px-16 animate-fade-in">
+    <h1 className="slide-title font-display font-bold text-foreground">How often do we say…</h1>
+    <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+      {PHRASES.map((p) => (
+        <p key={p} className="slide-body-lg font-serif italic text-foreground/85 border-l-4 border-primary pl-6">{p}</p>
+      ))}
+    </div>
+    <p className="slide-body text-muted-foreground">Every one assumes a picture in your head.</p>
+  </div>
+);
