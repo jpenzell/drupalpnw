@@ -7,7 +7,7 @@ import { usePresentationMode } from "@/contexts/PresentationModeContext";
 
 export const FinalSlide = () => {
   const connectUrl = `${getPublicOrigin()}/connect`;
-  const { eventName, eventWhen } = usePresentationMode();
+  const { eventWhere, eventWhen } = usePresentationMode();
 
 
   return (
@@ -18,16 +18,16 @@ export const FinalSlide = () => {
           <div className="space-y-6 text-left">
             <p className="slide-kicker text-secondary">Curtain call</p>
             <h2 className="slide-title font-display font-bold text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.85)]">
-              Change one thing on Monday.
+              One change on Monday.
             </h2>
             <p className="slide-body text-white/85 italic drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)]">
-              Structured freedom. Curb-cut design. One thing you'll actually change.
+              Structured freedom. Curb-cut design.
             </p>
             <p className="slide-body text-white/90 drop-shadow-[0_2px_18px_rgba(0,0,0,0.7)]">
               Josh Penzell · Imagination Applied
             </p>
             <p className="slide-caption text-white/65 uppercase tracking-[0.12em]">
-              {eventName} · {eventWhen}
+              {eventWhere}
             </p>
           </div>
 

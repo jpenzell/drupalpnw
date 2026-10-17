@@ -6,6 +6,7 @@ interface PresentationModeContextType {
   presenterName: string;
   presenterCompany: string;
   eventName: string;
+  eventWhere: string;
   eventWhen: string;
 }
 
@@ -17,6 +18,7 @@ const contextValue: PresentationModeContextType = {
   presenterName: "Josh Penzell",
   presenterCompany: "Imagination Applied",
   eventName: "Keynote · BCIT Downtown · Room 280",
+  eventWhere: "BCIT Downtown · Room 280",
   eventWhen: "Saturday, October 17, 2026 · 11:30 a.m.–12:15 p.m.",
 };
 
