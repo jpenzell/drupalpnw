@@ -666,7 +666,7 @@ const SPARE_IDS = new Set([
 const RUN_ORDER = [
   "S0", "S0-sponsors", "S1",
   // We all think differently
-  "AM-ball", "AM-ball-results", "AM-ball-reveal", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
+  "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-voice", "AM-voice-reveal", "AM-aware",
   "AM-time", "AM-sensory",
   "AM-duck", "A1-1", "AM-1000",
   // Language shapes how we think
