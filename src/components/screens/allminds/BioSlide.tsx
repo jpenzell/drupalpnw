@@ -64,7 +64,7 @@ export const BioSlide = () => (
         <div className="space-y-9">
           <p className="slide-body text-muted-foreground">My Attention Comparison Score</p>
 
-          <div className="relative pt-40">
+          <div className="relative pt-44">
             {/* The score, standing directly over the arrow that marks it */}
             <div
               className="absolute top-0 flex -translate-x-1/2 flex-col items-center"
