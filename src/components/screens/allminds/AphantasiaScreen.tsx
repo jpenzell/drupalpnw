@@ -7,16 +7,16 @@ const LEVELS = [
 ];
 
 export const AphantasiaScreen = () => (
-  <div className="flex-1 min-h-0 flex flex-col justify-center gap-6 px-16 py-10 animate-fade-in">
+  <div className="flex-1 min-h-0 flex flex-col justify-center gap-6 px-2 py-4 md:px-16 md:py-10 animate-fade-in">
     <div className="space-y-3">
       <p className="slide-kicker text-secondary font-semibold">Aphantasia</p>
       <h1 className="slide-title font-display font-bold text-foreground leading-tight">No mind's eye — and most people never know.</h1>
       <p className="slide-body-lg text-foreground/75">Little or no voluntary mental imagery. Same word, four different inner screens.</p>
     </div>
-    <div className="grid grid-cols-4 gap-8 flex-1 min-h-0">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-8 md:flex-1 md:min-h-0">
       {LEVELS.map((l, i) => (
-        <div key={l.label} className={`rounded-3xl border-2 ${i === 3 ? "border-primary" : "border-border"} bg-card p-5 flex flex-col items-center gap-4 min-h-0`}>
-          <div className="w-full flex-1 min-h-0 rounded-2xl bg-muted flex items-center justify-center overflow-hidden">
+        <div key={l.label} className={`rounded-3xl border-2 ${i === 3 ? "border-primary" : "border-border"} bg-card p-3 md:p-5 flex flex-col items-center gap-4 min-h-0`}>
+          <div className="w-full aspect-square md:aspect-auto md:flex-1 min-h-0 rounded-2xl bg-muted flex items-center justify-center overflow-hidden">
             {i === 0 && (
               <div className="w-3/5 aspect-square max-h-full rounded-full shadow-2xl animate-bounce"
                 style={{ background: "radial-gradient(circle at 32% 28%, hsl(var(--background)) 0%, hsl(var(--primary)) 28%, hsl(var(--primary) / 0.75) 70%, hsl(var(--foreground)) 100%)" }} />
@@ -37,9 +37,9 @@ const PHRASES = ["“Visualize the end state…”", "“Picture this…”", "�
 
 /** Everyday instructions that quietly assume a mind's eye. */
 export const VisualizePhrasesScreen = () => (
-  <div className="flex-1 flex flex-col justify-center gap-12 px-16 animate-fade-in">
+  <div className="flex-1 flex flex-col justify-center gap-6 md:gap-12 px-2 py-4 md:px-16 animate-fade-in">
     <h1 className="slide-title font-display font-bold text-foreground">How often do we say…</h1>
-    <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 md:gap-y-6">
       {PHRASES.map((p) => (
         <p key={p} className="slide-body-lg font-serif italic text-foreground/85 border-l-4 border-primary pl-6">{p}</p>
       ))}
