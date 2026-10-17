@@ -17,6 +17,7 @@ import { TitleSlide } from "@/components/screens/tt/TitleSlide";
 import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/allminds/KeynoteOpening";
 import { AphantasiaScreen, VisualizePhrasesScreen } from "@/components/screens/allminds/AphantasiaScreen";
 import { PupilStudySlide } from "@/components/screens/allminds/PupilStudySlide";
+import { BioSlide } from "@/components/screens/allminds/BioSlide";
 import { LiveChoicePoll } from "@/components/screens/allminds/LiveChoicePoll";
 import { TimePerceptionExperiment } from "@/components/screens/allminds/TimePerceptionExperiment";
 import { SensoryExperiment } from "@/components/screens/allminds/SensoryExperiment";
@@ -153,6 +154,9 @@ const screens = [
     notes: "A real thank-you to the sponsors who made this summit happen. Organizer artwork shown unchanged. BRIDGE: Now, who's speaking today." },
   { id: "S1", title: "Opening", component: TitleSlide,
     notes: "Welcome the BCIT Downtown room. Curtain up. Every team, product, and organization is shaped by invisible cognitive assumptions — and the people struggling have already learned to work around us. MFA + MBA, 20 years of theater directing, Amazon/Zillow/Skillsoft, and a late diagnosis of my own. Today is not a lecture about neurodiversity: it's a set of live experiments you are inside of." },
+
+  { id: "S1-bio", title: "About Josh", component: BioSlide,
+    notes: "Who's standing up here: theater director for the first part of my career, MFA and MBA, and a diagnosis that arrived late. The number on the right is mine, from my own attention test — below zero means it read me the way it reads people independently diagnosed with ADHD. Say 'ADD', the word on my report, not the clinical label. BRIDGE: Now let's find out how the rest of this room works." },
 
   // ============ ALL MINDS — presenter outline beats (ordered by RUN_ORDER below) ============
   { id: "AM-ball", title: "Picture a Ball", component: () => (
@@ -710,7 +714,7 @@ const SPARE_IDS = new Set([
 // designed for the bell curve → theater (cast / rehearse / direct) → dream vs imagination.
 // Any screen not listed keeps its original relative position after this list (appendix).
 const RUN_ORDER = [
-  "S0-sponsors", "S1",
+  "S0-sponsors", "S1", "S1-bio",
   // We all think differently
 "AM-ball", "AM-ball-results", "AM-aphantasia", "AM-visualize", "AM-pupils", "AM-voice", "AM-voice-results", "AM-voice-reveal", "AM-time",
   "AM-aware",
