@@ -188,7 +188,7 @@ const screens = [
         showJoinQR
       />
     ), notes: "Same with inner voice. Let the poll fill. Find the 'never' people — the room usually gasps." },
-{ id: "AM-voice-results", title: "Inner Voice — Results", component: () => (
+  { id: "AM-voice-results", title: "Inner Voice — Results", component: () => (
       <LiveChoicePoll
         pollKey="am-voice"
         kicker="Experiment 2"
@@ -215,7 +215,7 @@ const screens = [
         showJoinQR
       />
     ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
-{ id: "AM-duck-results", title: "Duck or Rabbit — Results", component: () => (
+  { id: "AM-duck-results", title: "Duck or Rabbit — Results", component: () => (
       <LiveChoicePoll
         pollKey="am-duck"
         kicker="Views of the world"
@@ -269,7 +269,7 @@ const screens = [
         showJoinQR
       />
     ), notes: "Poll, then: most caption users are hearing — noisy rooms, second languages, quiet phones, focus. [Cite your preferred source aloud.]" },
-{ id: "AM-curb-q-results", title: "Curb Cut — Results", component: () => (
+  { id: "AM-curb-q-results", title: "Curb Cut — Results", component: () => (
       <LiveChoicePoll
         pollKey="am-curb"
         kicker="The curb-cut principle"
