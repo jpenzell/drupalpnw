@@ -62,6 +62,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
     return (
       <div className="flex-1 flex flex-col gap-4 p-5 animate-fade-in">
         <h2 className="text-2xl font-display font-bold text-foreground text-center">{question}</h2>
+        {prompt && <p className="text-center text-muted-foreground -mt-2">{prompt}</p>}
         {image && <img src={image} alt={imageAlt ?? ""} className="max-h-56 object-contain mx-auto" />}
         <div className="grid gap-3">
           {options.map((o) => (
@@ -89,7 +90,7 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
         <div className="space-y-5">
           {kicker && <p className="slide-kicker text-secondary font-semibold">{kicker}</p>}
           <h1 className={`${stageOnly ? "slide-title" : ((question?.length ?? 0) > 60 ? "text-5xl leading-[1.1]" : "text-6xl leading-[1.05]")} font-display font-bold text-foreground`}>{stageOnly ?? question}</h1>
-          {prompt && !stageOnly && <p className="text-3xl text-foreground/75">{prompt}</p>}
+          {prompt && <p className={`${stageOnly ? "text-2xl" : "text-3xl"} text-foreground/75`}>{prompt}</p>}
           {!stageOnly && <><div className="space-y-3">
             {options.map((o) => {
               const pct = total ? Math.round((counts[o] / total) * 100) : 0;
