@@ -4,16 +4,17 @@ import { usePresentationMode } from "@/contexts/PresentationModeContext";
 
 export const TitleSlide = () => {
   const { isParticipant } = useSession();
-  const { presenterName, presenterCompany, eventName } = usePresentationMode();
+  const { presenterName, presenterCompany, eventName, presentationSubtitle, eventWhen } =
+    usePresentationMode();
 
   return (
     <div className="flex-1 flex items-center justify-center animate-fade-in relative overflow-hidden min-h-0 bg-iqa-hero">
       <div className="absolute top-8 right-8 md:top-12 md:right-14 z-20 text-right leading-tight">
         <p className="slide-body font-display font-black text-primary tracking-[0.14em]">
-          ISPI
+          BCIT
         </p>
         <p className="slide-chrome font-display text-foreground/70 tracking-[0.12em] uppercase">
-          Minnesota Chapter
+          Downtown Campus
         </p>
       </div>
 
@@ -30,15 +31,15 @@ export const TitleSlide = () => {
 
         <h1 className="font-display font-bold leading-none max-w-7xl">
           <span className="slide-title-lg block text-primary">
-            Rehearsing the Future
+            AI for All Minds
           </span>
           <span className="slide-subtitle block mt-5 text-foreground font-medium">
-            Directing the Future of Training<br />in the Age of AI
+            How cognitive diversity creates<br />blind spots and breakthroughs
           </span>
         </h1>
 
         <p className="slide-caption text-foreground/65 uppercase tracking-[0.12em]">
-          Online program · September 25, 2026 · 12:00–1:00 p.m. CST
+          {eventWhen}
         </p>
 
         <div className="flex flex-col items-center gap-1 pt-2">
@@ -51,10 +52,10 @@ export const TitleSlide = () => {
           <div className="bg-foreground/10 rounded-2xl px-6 py-4 border border-spotlight/40 text-center mt-2 backdrop-blur-md">
             <div className="flex items-center justify-center gap-2 text-foreground mb-1">
               <Sparkles className="h-5 w-5 text-spotlight" />
-              <span className="slide-caption font-semibold">You're in the cast!</span>
+              <span className="slide-caption font-semibold">You're in the experiment!</span>
             </div>
             <p className="slide-chrome text-foreground/60">
-              Keep this screen handy — we'll use it for interactive moments.
+              Keep this screen handy — your answers feed the live moments.
             </p>
           </div>
         )}
