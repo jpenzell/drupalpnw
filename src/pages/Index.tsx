@@ -14,6 +14,7 @@ import zenStageSpotlight from "@/assets/zen/stage-spotlight.jpg";
 
 // Reusable framework slides
 import { TitleSlide } from "@/components/screens/tt/TitleSlide";
+import { KeynoteTitleScreen, KeynoteSponsorScreen } from "@/components/screens/allminds/KeynoteOpening";
 import { AboutMeSlide } from "@/components/screens/tt/AboutMeSlide";
 import { PartnerExerciseSlide } from "@/components/screens/tt/PartnerExerciseSlide";
 
@@ -139,6 +140,10 @@ import { EnsembleSizeSlide } from "@/components/screens/penske/EnsembleSizeSlide
 
 const screens = [
   // ============ OPENING ============
+  { id: "S0", title: "AI for All Minds", component: KeynoteTitleScreen,
+    notes: "Template title. Let the room settle. BRIDGE: First, thank the sponsors." },
+  { id: "S0-sponsors", title: "Thank you to our sponsors", component: KeynoteSponsorScreen,
+    notes: "A real thank-you to the sponsors who made this summit happen. Organizer artwork shown unchanged. BRIDGE: Now, who's speaking today." },
   { id: "S1", title: "Opening", component: TitleSlide,
     notes: "Welcome the BCIT Downtown room. Curtain up. Every team, product, and organization is shaped by invisible cognitive assumptions — and the people struggling have already learned to work around us. MFA + MBA, 20 years of theater directing, Amazon/Zillow/Skillsoft, and a late diagnosis of my own. Today is not a lecture about neurodiversity: it's a set of live experiments you are inside of." },
 
