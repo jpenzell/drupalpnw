@@ -24,13 +24,14 @@ export const useBroadcastCaptions = (sessionId: string | undefined, enabled: boo
 };
 
 /** Phone side: CC toggle + Québécois French translation of the presenter's captions. */
-export const PhoneCaptions = ({ sessionId }: { sessionId: string }) => {
+export const PhoneCaptions = ({ sessionId }: { sessionId?: string }) => {
   const [show, setShow] = useState(false);
   const [french, setFrench] = useState(false);
   const [live, setLive] = useState({ on: false, text: "" });
   const [fr, setFr] = useState("");
 
   useEffect(() => {
+    if (!sessionId) return;
     const ch = supabase
       .channel(captionChannelName(sessionId))
       .on("broadcast", { event: "caption" }, ({ payload }) => setLive({ on: !!payload?.on, text: payload?.text ?? "" }))
@@ -60,15 +61,13 @@ export const PhoneCaptions = ({ sessionId }: { sessionId: string }) => {
           <p className="text-lg font-medium leading-snug">{line}</p>
         </div>
       )}
-      <div className="flex gap-2 p-2 justify-center">
+      <div className="flex flex-wrap gap-2 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] justify-center">
         <Button size="sm" variant={show ? "default" : "outline"} onClick={() => setShow((s) => !s)} aria-pressed={show}>
           {show ? <Captions className="h-4 w-4" /> : <CaptionsOff className="h-4 w-4" />} CC
         </Button>
-        {show && (
-          <Button size="sm" variant={french ? "default" : "outline"} onClick={() => setFrench((f) => !f)} aria-pressed={french}>
+          <Button size="sm" variant={french ? "default" : "outline"} onClick={() => { setShow(true); setFrench((f) => !f); }} aria-pressed={french}>
             <Languages className="h-4 w-4" /> {french ? "Français (QC)" : "Traduire en français"}
           </Button>
-        )}
       </div>
     </div>
   );
