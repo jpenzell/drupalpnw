@@ -1,5 +1,6 @@
 import "./keynote.css";
 import sponsorSlideImage from "@/assets/pnw-drupal-sponsors-2026.jpg";
+import { useSession } from "@/contexts/SessionContext";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { JoinQRCard } from "./JoinQRCard";
 
