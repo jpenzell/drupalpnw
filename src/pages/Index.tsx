@@ -679,8 +679,7 @@ const RUN_ORDER = [
   // Individual vs environment → culture
   "AM-env", "A1-5", "A1-4d", "A1-3e", "AM-role", "L-S3a3c",
   // The problem: built for the majority, AI makes it variable
-  "AM-bell", "AM-personas", "AM-reflect", "AM-curb-q", "AM-curb", "AM-variable", "A0-zoox", "A0-reframe", "A2-3d",
-  "AM-sharing", "A3-3-4c",
+  "AM-bell", "AM-personas", "AM-reflect", "AM-curb-q", "AM-curb", "AM-variable", "A0-zoox", "A0-reframe",
   // Theater is the answer
   "AM-theater", "A3-1-2", "A3-1-2c", "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
   "A3-0",
