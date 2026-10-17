@@ -15,6 +15,7 @@ import { FitToStage } from "@/components/FitToStage";
 import { SessionQRCode } from "@/components/SessionQRCode";
 import { useSession } from "@/contexts/SessionContext";
 import { useLiveCaptions } from "@/hooks/useLiveCaptions";
+import { PhoneCaptions, useBroadcastCaptions } from "@/components/PhoneCaptions";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { toast } from "sonner";
 import {
@@ -62,6 +63,7 @@ export const PresentationLayout = ({
   const captions = useLiveCaptions();
 
   const { session, createSession, endSession, updateSlide, isPresenter: hasSession } = useSession();
+  useBroadcastCaptions(hasSession ? session?.id : undefined, captions.enabled, captions.text);
   const { presentationTitle } = usePresentationMode();
   const [isRestarting, setIsRestarting] = useState(false);
 
@@ -485,6 +487,7 @@ export const PresentationLayout = ({
           </Button>
         </div>
       )}
+      {mode === "participant" && session && <PhoneCaptions sessionId={session.id} />}
       {/* Live captions bar — a real layout row, so it shrinks the stage
           instead of covering it. Nothing gets cut off. */}
       {captions.enabled && (
