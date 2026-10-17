@@ -4,5 +4,5 @@
 - [x] Verify phone links and form submission, deploy the email update, and check delivery status (sent event confirmed).
 
 # Running order
-- [ ] Cut AM-duck, AM-duck-results and AM-1000 from the delivered run (appendix only, nothing deleted).
+- [x] Cut AM-duck, AM-duck-results and AM-1000 from the delivered run (appendix only, nothing deleted).
 - [ ] Publish so the QR destination and today's phone fixes go live.
