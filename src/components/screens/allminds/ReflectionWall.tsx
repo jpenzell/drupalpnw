@@ -52,14 +52,20 @@ export const ReflectionWall = () => {
         <div className="space-y-4">
           <p className="slide-kicker text-secondary font-semibold">Reflection</p>
           <h1 className="slide-title font-display font-bold text-foreground">{QUESTION}</h1>
+          <p className="slide-body text-foreground/70 flex items-center gap-3">
+            <Users className="h-7 w-7" /> {answers.length ? `${answers.length} reflections in — reveal when ready.` : "Answer on your phone, or just think about it."}
+          </p>
         </div>
-        <button
-          onClick={() => setShow((s) => !s)}
-          className="shrink-0 inline-flex items-center gap-2 rounded-full border border-border px-5 py-2 slide-chrome text-foreground/70 hover:text-foreground"
-          aria-label={show ? "Hide answers" : "Show answers"}
-        >
-          {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />} {show ? "Hide" : "Show"} answers
-        </button>
+        <div className="flex items-start gap-6 shrink-0">
+          <JoinQRCard size={180} />
+          <button
+            onClick={() => setShow((s) => !s)}
+            className="inline-flex items-center gap-2 rounded-full border border-border px-5 py-2 slide-chrome text-foreground/70 hover:text-foreground"
+            aria-label={show ? "Hide answers" : "Show answers"}
+          >
+            {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />} {show ? "Hide" : "Show"} answers
+          </button>
+        </div>
       </div>
       {show ? (
         <div className="grid grid-cols-3 gap-5 max-h-[55vh] overflow-hidden">
@@ -67,11 +73,7 @@ export const ReflectionWall = () => {
             <p key={i} className="rounded-2xl border-2 border-border bg-card p-6 slide-body text-foreground">{a}</p>
           ))}
         </div>
-      ) : (
-        <p className="slide-body text-foreground/70 flex items-center gap-3">
-          <Users className="h-7 w-7" /> {answers.length ? `${answers.length} reflections in — reveal when ready.` : "Answer on your phone, or just think about it."}
-        </p>
-      )}
+      ) : null}
     </div>
   );
 };
