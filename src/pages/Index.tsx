@@ -665,6 +665,7 @@ const SPARE_IDS = new Set([
   "A3-3-4c",
   "AM-personas",
   "AM-variable",
+  "AM-theater",
 ]);
 
 // Delivered running order, following the presenter's outline:
@@ -686,7 +687,7 @@ const RUN_ORDER = [
   // The problem: built for the majority, AI makes it variable
   "AM-bell", "AM-curb", "AM-curb-q", "A0-zoox", "A0-reframe",
   // Theater is the answer
-  "AM-theater", "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
+  "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
   "A3-0",
   "A3-1-1", "A3-1-2", "A3-1-2c", "A3-1-1b", "A3-1-1c", "A3-1-1d",
   "A3-2-1", "A3-2-1b", "C5-observer-intro-video", "C5-observer", "A3-2-2", "A3-2-3", "A3-2-3b", "A3-2-4",
