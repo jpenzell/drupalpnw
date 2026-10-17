@@ -333,6 +333,20 @@
   .slide-content .zen-dark .bg-card {
     background-color: hsl(220 20% 8% / 0.85) !important;
   }
+  /* Brand colors are tuned for the light deck — on a photo slide they go
+     near-invisible (navy on near-black), so lift them to readable tints. */
+  .slide-content .zen-dark .text-primary,
+  .slide-content .zen-dark [class*="text-primary/"] {
+    color: hsl(210 100% 76%) !important;
+  }
+  .slide-content .zen-dark .text-secondary,
+  .slide-content .zen-dark [class*="text-secondary/"] {
+    color: hsl(43 100% 70%) !important;
+  }
+  .slide-content .zen-dark .text-accent,
+  .slide-content .zen-dark [class*="text-accent/"] {
+    color: hsl(48 100% 64%) !important;
+  }
 
 
 
