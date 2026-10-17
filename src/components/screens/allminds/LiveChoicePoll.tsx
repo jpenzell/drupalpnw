@@ -17,6 +17,8 @@ interface LiveChoicePollProps {
   showJoinQR?: boolean;
   /** Stage shows only this headline (+QR), no options or bars; phones still get `question`. */
   stageOnly?: string;
+  /** Give the picture the dominant share of the stage — for illusion images people must read from the back. */
+  imageBig?: boolean;
 }
 
 /**
@@ -24,7 +26,7 @@ interface LiveChoicePollProps {
  * participants tap an option on their phones. Works with zero responses —
  * the question still reads as a "raise your hand" prompt.
  */
-export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, image, imageAlt, showJoinQR, stageOnly }: LiveChoicePollProps) => {
+export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, image, imageAlt, showJoinQR, stageOnly, imageBig }: LiveChoicePollProps) => {
   const { session, isPresenter, isParticipant } = useSession();
   const { currentPoll, responses, myResponse, createPoll, getPollForSlide, submitResponse } = usePoll();
   const [picked, setPicked] = useState<string | null>(null);
@@ -57,6 +59,11 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
   }, [responses, options, active]);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const mine = active ? ((myResponse?.value as { answer?: string } | null)?.answer ?? picked) : picked;
+  const gridCols = !image
+    ? (showJoinQR && session ? "grid-cols-[1fr_auto]" : "grid-cols-1")
+    : imageBig
+      ? (showJoinQR && session ? "grid-cols-[1.9fr_1fr_auto]" : "grid-cols-[1.5fr_1fr]")
+      : (showJoinQR && session ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-2");
 
   if (isParticipant) {
     return (
@@ -85,8 +92,8 @@ export const LiveChoicePoll = ({ pollKey, kicker, question, prompt, options, ima
 
   return (
     <div className="flex-1 flex items-center justify-center px-16 py-14 animate-fade-in">
-      <div className={`w-full max-w-7xl grid gap-16 items-center ${image ? (showJoinQR && session ? "grid-cols-[1fr_1fr_auto]" : "grid-cols-2") : showJoinQR && session ? "grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
-        {image && <img src={image} alt={imageAlt ?? ""} className="w-full max-h-[70vh] object-contain" />}
+      <div className={`w-full ${imageBig ? "max-w-[1680px]" : "max-w-7xl"} grid gap-16 items-center ${gridCols}`}>
+        {image && <img src={image} alt={imageAlt ?? ""} className={`w-full ${imageBig ? "max-h-[700px]" : "max-h-[70vh]"} object-contain`} />}
         <div className="space-y-5">
           {kicker && <p className="slide-kicker text-secondary font-semibold">{kicker}</p>}
           <h1 className={`${stageOnly ? "slide-title" : ((question?.length ?? 0) > 60 ? "text-5xl leading-[1.1]" : "text-6xl leading-[1.05]")} font-display font-bold text-foreground`}>{stageOnly ?? question}</h1>

@@ -219,6 +219,7 @@ const screens = [
         options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
         image={duckRabbit}
         imageAlt="Duck-rabbit illusion"
+        imageBig
         showJoinQR
       />
     ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
@@ -230,6 +231,7 @@ const screens = [
         options={["A duck", "A rabbit", "Both — it flips", "Something else"]}
         image={duckRabbit}
         imageAlt="Duck-rabbit illusion"
+        imageBig
       />
     ), notes: "Duck or rabbit? Same image, different first reads. Some people can't flip it at all." },
   { id: "AM-1000", title: "Worth a Thousand Words?", component: () => (
