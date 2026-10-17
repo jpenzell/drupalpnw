@@ -12,7 +12,7 @@ export const CopyMachineExampleSlide = () => {
     label, color, children, visible,
   }: { label: string; color: string; children: React.ReactNode; visible: boolean }) => (
     <div className={`grid grid-cols-[minmax(240px,340px)_1fr] gap-8 items-baseline transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
-      <p className={`slide-body-lg font-display font-light tracking-[0.05em] text-right whitespace-nowrap ${color}`}>{label}</p>
+      <p className={`slide-body-lg font-display font-medium tracking-[0.05em] text-right whitespace-nowrap ${color}`}>{label}</p>
       <div className="border-l border-border pl-6">{children}</div>
     </div>
   );
@@ -27,7 +27,7 @@ export const CopyMachineExampleSlide = () => {
             </p>
           </Row>
 
-          <Row label="OBSTACLE" color="text-muted-foreground" visible={shown(3)}>
+          <Row label="OBSTACLE" color="text-foreground" visible={shown(3)}>
             <p className="slide-body-lg font-display text-foreground leading-snug">
               Someone is already at the copier.
             </p>
