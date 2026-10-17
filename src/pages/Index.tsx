@@ -664,6 +664,7 @@ const SPARE_IDS = new Set([
   "AM-sharing",
   "A3-3-4c",
   "AM-personas",
+  "AM-variable",
 ]);
 
 // Delivered running order, following the presenter's outline:
@@ -683,7 +684,7 @@ const RUN_ORDER = [
   // Individual vs environment → culture
   "AM-env", "A1-5", "A1-4d", "A1-3e", "AM-role", "L-S3a3c",
   // The problem: built for the majority, AI makes it variable
-  "AM-bell", "AM-curb", "AM-curb-q", "AM-variable", "A0-zoox", "A0-reframe",
+  "AM-bell", "AM-curb", "AM-curb-q", "A0-zoox", "A0-reframe",
   // Theater is the answer
   "AM-theater", "A2-4", "A2-5", "A2-5b", "A2-5c", "A2-7",
   "A3-0",
