@@ -59,6 +59,7 @@ export const PresentationLayout = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isBlackout, setIsBlackout] = useState(false);
   const [hideChrome, setHideChrome] = useState(false);
+  const captions = useLiveCaptions();
 
   const { session, createSession, endSession, updateSlide, isPresenter: hasSession } = useSession();
   const { presentationTitle } = usePresentationMode();
@@ -222,6 +223,10 @@ export const PresentationLayout = ({
       if (isTextInput) return;
       e.preventDefault();
       cycleTheme();
+    } else if (e.key === "c" || e.key === "C") {
+      if (isTextInput) return;
+      e.preventDefault();
+      captions.toggle();
     }
   };
 
