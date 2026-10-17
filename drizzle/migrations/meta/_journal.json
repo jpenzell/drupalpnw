@@ -8,6 +8,13 @@
       "when": 1792250549492,
       "tag": "0000_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792255047725,
+      "tag": "0001_enable_realtime_on_sessions",
+      "breakpoints": true
     }
   ]
 }
