@@ -4,7 +4,7 @@
 - [x] Verify phone links and form submission, deploy the email update, and check delivery status (sent event confirmed).
 
 # Running order
-- [ ] Add and verify live phone percentages and room results for Slam dunk and Rarely on A1-3b.
+- [x] Add and verify live phone percentages and room results for Slam dunk and Rarely on A1-3b; joined phone submitted 90% and 15%, both read back on stage.
 - [x] Keep CC and Québec French controls visible on joined phones and the closing QR form; verified both buttons and preserved typed form input.
 - [x] Cut AM-duck, AM-duck-results and AM-1000 from the delivered run (appendix only, nothing deleted).
 - [x] Move AM-pupils to play right after AM-aware.
