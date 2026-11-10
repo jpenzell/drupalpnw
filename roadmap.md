@@ -13,6 +13,6 @@
 - [ ] Publish so the QR destination and today's phone fixes go live.
 
 # Interactive access gate (MainSite canonical)
-- [x] Stage 0: staged implementation aligned to the final MainSite contract (Ed25519, per-action introspection, server-side canonical session, nonce handshake, maintenance-only rollback, 12 guarded paid functions, post-event self-guided access with whole-deck entry gate) — 68 synthetic tests pass.
-- [ ] MainSite: issuer set to https://www.joshpenzell.com; apex → www redirect (apex currently serves without redirecting); gate ON + JWKS live; introspect rate budget accepted — blocked on MainSite.
+- [x] Stage 0: staged implementation aligned to the final MainSite contract (Ed25519, per-action introspection, server-side canonical session, nonce handshake, maintenance-only rollback, 12 guarded paid functions, post-event self-guided access with whole-deck entry gate) — 69 synthetic tests + 36/36 offline browser checks pass (gate/ACCEPTANCE.md).
+- [ ] MainSite: issuer https://www.joshpenzell.com; gated-route apex → www canonicalization; secure Ed25519 signing key + JWKS; gate ON; introspect rate budget — blocked on MainSite.
 - [ ] Stages 1–4 activation and publish — blocked on coordinated window and approval.

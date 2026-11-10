@@ -103,3 +103,14 @@ test("post-event: access without a live session; live writes report session_inac
   assert.deepEqual(r, { ok: false, error: "session_inactive" });
   assert.deepEqual(h.errors, ["session_inactive"]);
 });
+
+test("concurrent connects (entry gate + auto-join) share one handshake", async () => {
+  const h = harness("enforce", { noSession: true });
+  const a = h.core.connect();
+  const b = h.core.connect();
+  assert.equal(h.tokens.requests(), 1);
+  await h.tokens.send("tok.1.sig");
+  assert.equal((await a)?.token, "tok.1.sig");
+  assert.equal((await b)?.token, "tok.1.sig");
+  assert.equal(h.calls.filter((c) => (c.opts.body as any)?.action === "identify").length, 1);
+});

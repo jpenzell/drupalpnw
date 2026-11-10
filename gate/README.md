@@ -79,7 +79,7 @@ This folder targets the final MainSite contract from candidate `9f83abd40800c045
 ## Published vs candidate
 The live bundle `index-BJwF2DXK.js` contains markers from commit `8ee343f`. This is evidence, not attestation: the hosting service exposes no commit id, and a byte-identical rebuild was not done.
 
-`git diff --stat 8ee343f -- src` shows 32 files:
+The exact file list is in `gate/ACCEPTANCE.md`. Summary of `src` changes:
 - `src/lib/gate/**` — new.
 - `SessionContext` and `PollContext` — branches that only run when the gate flag is on.
 - 3 story/number screens — wrapped in `gate.route`.
@@ -92,7 +92,7 @@ Outside `src`: `gate/**`, `AGENTS.md`, `roadmap.md` and `.lovable/plan*`. No sli
 
 ## Prerequisites still open (concrete)
 1. **MainSite issuer:** `DRUPAL_CONTACT_ORIGIN`/issuer set to exactly `https://www.joshpenzell.com`. The document's apex assumption must be corrected; until then every token fails `wrong_issuer` (fail closed).
-2. **Apex visitors:** `https://joshpenzell.com/` currently serves 200 itself; it does not redirect to www. This was checked read-only today. A visitor on the apex domain has parent origin `https://joshpenzell.com`, so the deck's message to `www` is dropped and that visitor cannot interact. MainSite must redirect apex to www, or make every capture link use www.
+2. **Apex visitors:** all attendee email links already use www. MainSite only needs to send the gated route on the apex domain (`https://joshpenzell.com/p/ai-for-all-minds-pnw-drupal-summit-2026-10-17`) to www. No site-wide change is needed. Without that, an apex visitor's handshake is dropped and the deck shows the event-page notice; it fails closed.
 3. **MainSite parent iframe:** `src` set to `https://drupalpnw.lovable.app/`, or any path on that origin; no code is needed. The deck currently sends no `X-Frame-Options` or `frame-ancestors`, so it can be framed. This was checked read-only today.
 4. **MainSite gate, keys and capacity:** the MainSite gate must be ON and its JWKS must serve the Ed25519 key before Stage 3; a disabled introspect returns 404, which the deck denies. The introspect rate budget must cover one call per attendee action, plus one per token renewal (every 4 minutes per attendee), across the room.
 5. **Outbound access:** the edge runtime must be able to reach `www.joshpenzell.com`. This is checked at Stage 3 with one synthetic token.

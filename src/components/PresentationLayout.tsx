@@ -18,6 +18,8 @@ import { useLiveCaptions } from "@/hooks/useLiveCaptions";
 import { PhoneCaptions, useBroadcastCaptions } from "@/components/PhoneCaptions";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { toast } from "sonner";
+import { GATE_MODE } from "@/lib/gate/config";
+import { isEmbeddedWindow } from "@/lib/gate/gateClient";
 import {
   Sheet,
   SheetContent,
@@ -105,6 +107,9 @@ export const PresentationLayout = ({
   };
 
   const isPresenter = mode === "presenter";
+  // Gate on: visitors inside the MainSite frame explore self-guided; only a standalone, password-
+  // authorized presenter sees session controls (the server enforces this regardless).
+  const canManageSession = GATE_MODE === "off" || !isEmbeddedWindow();
   const isPresent = mode === "present";
   // Fullscreen and `h` must both remove presenter chrome completely so the
   // mirrored slide gets the full viewport instead of invisible reserved bars.
@@ -293,13 +298,13 @@ export const PresentationLayout = ({
             )}
             <ModeSelector currentMode={mode} />
 
-            {isPresenter && !session && (
+            {isPresenter && canManageSession && !session && (
               <Button variant="outline" size="sm" onClick={createSession} className="gap-2">
                 <Play className="h-4 w-4" />
                 Start Session
               </Button>
             )}
-            {isPresenter && session && (
+            {isPresenter && canManageSession && session && (
               <div className="flex items-center gap-2">
                 <SessionQRCode />
                 <Button variant="ghost" size="sm" onClick={handleRestart} disabled={isRestarting} className="gap-1 text-muted-foreground hover:text-secondary" title="Restart session">
@@ -456,14 +461,14 @@ export const PresentationLayout = ({
 
 
       {isPresenter && !chromeless && (
-        <footer className="border-t bg-card/80 backdrop-blur-sm px-6 py-4 flex items-center justify-between shadow-sm">
-          <Button variant="outline" size="lg" onClick={() => onNavigate(currentIndex - 1)} disabled={currentIndex === 0} className="font-semibold">
-            <ChevronLeft className="h-4 w-4 mr-2" />Previous
+        <footer className="border-t bg-card/80 backdrop-blur-sm px-3 sm:px-6 py-4 flex items-center justify-between gap-2 shadow-sm">
+          <Button variant="outline" size="lg" onClick={() => onNavigate(currentIndex - 1)} disabled={currentIndex === 0} className="font-semibold" aria-label="Previous">
+            <ChevronLeft className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Previous</span>
           </Button>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-mono text-muted-foreground bg-muted px-4 py-2 rounded-full">{currentScreen}</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xs sm:text-sm font-mono text-muted-foreground bg-muted px-3 sm:px-4 py-2 rounded-full whitespace-nowrap truncate">{currentScreen}</span>
             {sparesRemaining > 0 && (
-              <span className="text-xs uppercase tracking-wider font-semibold text-foreground bg-spotlight/20 border border-spotlight/45 rounded-full px-3 py-1">
+              <span className="hidden sm:inline text-xs uppercase tracking-wider font-semibold text-foreground bg-spotlight/20 border border-spotlight/45 rounded-full px-3 py-1">
                 {sparesRemaining} spare{sparesRemaining === 1 ? "" : "s"} left
               </span>
             )}
