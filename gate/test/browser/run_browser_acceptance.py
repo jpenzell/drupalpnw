@@ -207,6 +207,7 @@ async def main():
         check("valid entry: one handshake per load", len(nonces) == 1, f"nonces={len(nonces)}")
         check("valid entry: nonce is random base64url <=128", all(re.fullmatch(r"[A-Za-z0-9_-]{20,128}", n) for n in nonces), str([len(n) for n in nonces]))
         check("valid entry: identify sent the parent's token as Bearer", len(ids) == 1 and ids[0]["auth"] == f"Bearer {tokens[0]}", ids[0]["auth"][:40] if ids else "none")
+        check("valid entry: no session controls inside the MainSite frame", await fr.get_by_role("button", name="Start Session").count() == 0)
         check("valid entry: no sign-in, no session creation", B.signins == 0 and not any(c["body"].get("action") == "create_session" for c in B.calls))
         frame = page.frames[1]
         before = await frame.evaluate("document.body.innerText")
@@ -311,10 +312,11 @@ async def main():
         await page.keyboard.press("Control+A")
         await page.keyboard.type(PASSWORD)
         await page.keyboard.press("Enter")
-        await page.wait_for_url(DECK + "/", timeout=10000)
+        await page.wait_for_url(re.compile(re.escape(DECK) + r"/(#.*)?$"), timeout=10000)
         await page.wait_for_timeout(1500)
         body = await page.inner_text("body")
-        check("presenter: authorized login opens the stage deck", page.url == DECK + "/" and "Checking access" not in body and "Presenter sign-in" not in body, page.url)
+        check("presenter: authorized login opens the stage deck", page.url.startswith(DECK + "/") and "/presenter" not in page.url and "Checking access" not in body and "Presenter sign-in" not in body, page.url)
+        check("presenter: deliberate Start Session control offered", await page.get_by_role("button", name="Start Session").count() >= 1)
         check("presenter: one deliberate sign-in, no session auto-created",
               B.signins == 1 and not any(c["body"].get("action") == "create_session" for c in B.calls), f"signins={B.signins}")
         await page.screenshot(path=str(SHOTS / "10_presenter_deck.png"))

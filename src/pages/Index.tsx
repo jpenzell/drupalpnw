@@ -145,6 +145,7 @@ import { LearningHandoffsSlide } from "@/components/screens/penske/LearningHando
 import { CastingRoleFitSlide } from "@/components/screens/penske/CastingRoleFitSlide";
 import { AuditionScreen } from "@/components/screens/penske/AuditionScreen";
 import { EnsembleSizeSlide } from "@/components/screens/penske/EnsembleSizeSlide";
+import { GATE_MODE } from "@/lib/gate/config";
 
 
 const screens = [
@@ -786,6 +787,8 @@ const Index = () => {
   const autoStartedRef = useRef(false);
   useEffect(() => {
     if (autoStartedRef.current) return;
+    // Gate on: sessions start only deliberately (presenter's Start Session), never automatically.
+    if (GATE_MODE !== "off") return;
     if (!authReady) return;
     if (mode !== "presenter") return;
     if (session) return;

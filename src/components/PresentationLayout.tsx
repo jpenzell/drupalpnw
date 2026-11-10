@@ -18,6 +18,8 @@ import { useLiveCaptions } from "@/hooks/useLiveCaptions";
 import { PhoneCaptions, useBroadcastCaptions } from "@/components/PhoneCaptions";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { toast } from "sonner";
+import { GATE_MODE } from "@/lib/gate/config";
+import { isEmbeddedWindow } from "@/lib/gate/gateClient";
 import {
   Sheet,
   SheetContent,
@@ -105,6 +107,9 @@ export const PresentationLayout = ({
   };
 
   const isPresenter = mode === "presenter";
+  // Gate on: visitors inside the MainSite frame explore self-guided; only a standalone, password-
+  // authorized presenter sees session controls (the server enforces this regardless).
+  const canManageSession = GATE_MODE === "off" || !isEmbeddedWindow();
   const isPresent = mode === "present";
   // Fullscreen and `h` must both remove presenter chrome completely so the
   // mirrored slide gets the full viewport instead of invisible reserved bars.
@@ -293,13 +298,13 @@ export const PresentationLayout = ({
             )}
             <ModeSelector currentMode={mode} />
 
-            {isPresenter && !session && (
+            {isPresenter && canManageSession && !session && (
               <Button variant="outline" size="sm" onClick={createSession} className="gap-2">
                 <Play className="h-4 w-4" />
                 Start Session
               </Button>
             )}
-            {isPresenter && session && (
+            {isPresenter && canManageSession && session && (
               <div className="flex items-center gap-2">
                 <SessionQRCode />
                 <Button variant="ghost" size="sm" onClick={handleRestart} disabled={isRestarting} className="gap-1 text-muted-foreground hover:text-secondary" title="Restart session">
