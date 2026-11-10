@@ -11,3 +11,8 @@
 - [x] Re-lay out the bio slide (S1-bio) across the full stage width.
 - [x] Rebuild the four uploaded diagnosis charts after the bio and verify their values and projector layout.
 - [ ] Publish so the QR destination and today's phone fixes go live.
+
+# Interactive access gate (MainSite canonical)
+- [x] Stage 0: staged verifier, functions, migrations, handshake, synthetic tests (gate/, src/lib/gate).
+- [ ] Stage 1–4 activation — blocked on MainSite final contract (JWKS URL/kid, postMessage shape, claim names, test token).
+- [ ] Publish — held until gate is coordinated; legacy publish item folded into Stage 2.
