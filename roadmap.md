@@ -16,4 +16,6 @@
 - [x] Stage 0: staged implementation aligned to the final MainSite contract (Ed25519, per-action introspection, server-side canonical session, nonce handshake, maintenance-only rollback, 12 guarded paid functions, post-event self-guided access with whole-deck entry gate) — 69 synthetic tests + 36/36 offline browser checks pass (gate/ACCEPTANCE.md).
 - [ ] MainSite: issuer https://www.joshpenzell.com; gated-route apex → www canonicalization; secure Ed25519 signing key + JWKS; gate ON; introspect rate budget — blocked on MainSite.
 - [x] Stage 1: dormant migration, maintenance config, shared modules, submit-interaction and create-presenter-session live; denials verified (gate/STAGE1_APPLIED.md).
-- [ ] Stages 2–4 (dual publish, synthetic capture, enforce) — blocked on MainSite key/source release verification and coordinated window.
+- [x] Stage 2 source: `GATE_MODE` "dual"; tests, trial build and offline browser checks pass (gate/STAGE2_PREPARED.md).
+- [ ] Stage 2 publish — held for root's coordinated publication with MainSite.
+- [ ] Stage 3 (interactive on, one synthetic capture) and Stage 4 (enforce) — each awaits root authorization.

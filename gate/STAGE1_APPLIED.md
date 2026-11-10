@@ -91,7 +91,7 @@ Both functions' logs show clean boots and no errors.
 ## Rollback for Stage 1
 The state is already maintenance; `gate/data/rollback_maintenance.sql` is the same state. No old policy was replaced, so there is nothing to reopen. Removing the objects is not needed and is not part of the plan.
 
-## Next: Stage 2, held until MainSite key/source release is verified
+## Next: Stage 2 — source prepared, not published (see `gate/STAGE2_PREPARED.md`)
 1. Set `src/lib/gate/config.ts` `GATE_MODE` from `"off"` to `"dual"`, then **Publish**.
 
    Publishing also releases every pending `src` change listed in `gate/ACCEPTANCE.md`, including the phone footer fix and the roadmap's unpublished closing and phone fixes. Review that list in the same window.
