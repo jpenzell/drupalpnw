@@ -30,8 +30,10 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres", () => {
     handler(new Request("https://fn.local/x", { method: "POST", headers: { Origin: ORIGIN, "content-type": "application/json", ...headers }, body: JSON.stringify(body) }), deps);
   const read = async (r: Response) => ({ status: r.status, body: (await r.json()) as Record<string, any> });
   const token = (o: Record<string, unknown> = {}) => key.sign(key.header, claims(now(), o));
-  async function redeem(o: Record<string, unknown> = {}, code: string | undefined = session.code) {
-    return read(await post(handleRedeem, { token: await token(o), session_code: code }));
+  async function redeem(o: Record<string, unknown> = {}, code: string | null = session.code) {
+    const body: Record<string, unknown> = { token: await token(o) };
+    if (code !== null) body.session_code = code;
+    return read(await post(handleRedeem, body));
   }
 
   beforeAll(async () => {
@@ -109,7 +111,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres", () => {
   });
 
   test("redeem: unbound, mismatched, inactive or foreign-event sessions are refused", async () => {
-    assert.equal((await redeem({}, undefined)).body.error, "session_required");
+    assert.equal((await redeem({}, null)).body.error, "session_required");
     const mismatch = await read(await post(handleRedeem, { token: await token({ session_code: session.code }), session_code: otherSession.code }));
     assert.equal(mismatch.status, 403);
     assert.equal((await redeem({}, "ZZZZ")).body.error, "session_inactive");
@@ -140,7 +142,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres", () => {
   test("poll answer is written with the server-derived identity and read back", async () => {
     const { body: g } = await redeem();
     const r = await read(await post(handleSubmit, { action: "poll_response", poll_id: pollId, value: { text: "red ball" } }, { "x-pnw2-grant": g.grant }));
-    assert.equal(r.status, 200);
+    assert.equal(r.status, 200, JSON.stringify(r.body));
     assert.equal(r.body.data.participant_id, g.participant_key);
     const again = await read(await post(handleSubmit, { action: "poll_response", poll_id: pollId, value: { text: "blue ball" } }, { "x-pnw2-grant": g.grant }));
     assert.equal(again.body.data.id, r.body.data.id); // upsert, one answer per lead
