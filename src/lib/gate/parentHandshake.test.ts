@@ -53,7 +53,8 @@ test("default nonces are random, URL-safe and within 128 chars", () => {
 
 test("gate code never touches storage, URLs or analytics", () => {
   for (const f of ["parentHandshake.ts", "gateCore.ts", "gateClient.ts"]) {
-    const src = readFileSync(join(import.meta.dirname ?? __dirname, f), "utf8");
+    const src = readFileSync(join(import.meta.dirname ?? __dirname, f), "utf8")
+      .replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, ""); // code only, not comments
     assert.ok(!/localStorage|sessionStorage|indexedDB|document\.cookie|history\.(push|replace)State|gtag|analytics/.test(src), f);
   }
 });
