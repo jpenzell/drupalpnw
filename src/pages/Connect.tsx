@@ -7,6 +7,8 @@ import { usePresentationMode } from "@/contexts/PresentationModeContext";
 import { Button } from "@/components/ui/button";
 import { PhoneCaptions } from "@/components/PhoneCaptions";
 import { useSession } from "@/contexts/SessionContext";
+import { GATE_MODE, MAINSITE_CAPTURE_URL } from "@/lib/gate/config";
+import { redirectStandaloneAttendee } from "@/lib/gate/gateClient";
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/josh-penzell/";
 const ACADEMY_URL = "https://www.specialolympics.org/what-we-do/youth-and-schools/global-center-for-inclusion-in-education/unified-champion-schools-inclusion-academy";
@@ -40,6 +42,8 @@ const Connect = ({ embedded = false }: { embedded?: boolean }) => {
   const { presentationTitle } = usePresentationMode();
   const { session, joinSession } = useSession();
   useEffect(() => {
+    // Gate enforce: standalone visits capture leads on MainSite instead (no-op while the gate is off).
+    if (!embedded && GATE_MODE !== "off" && redirectStandaloneAttendee()) return;
     const code = new URLSearchParams(window.location.search).get("join");
     if (!embedded && code && !session) void joinSession(code);
   }, [embedded, session, joinSession]);
@@ -71,6 +75,12 @@ const Connect = ({ embedded = false }: { embedded?: boolean }) => {
     if (!parsed.success) {
       const first = parsed.error.issues[0];
       toast.error(first?.message ?? "Please check your inputs.");
+      return;
+    }
+
+    if (GATE_MODE !== "off") {
+      // MainSite is the canonical lead capture once the gate is on: no legacy row, no email.
+      window.open(MAINSITE_CAPTURE_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
