@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { toast } from "sonner";
 import agendaLearnImg from "@/assets/agenda-learn.png";
 import agendaDemoImg from "@/assets/agenda-demo.png";
@@ -101,7 +102,7 @@ export const AgendaScreen = () => {
   const handleRegenerate = useCallback(async (item: AgendaItem) => {
     setRegeneratingId(item.era);
     try {
-      const { data, error } = await supabase.functions.invoke(
+      const { data, error } = await invokeFunction(
         "regenerate-era-image",
         {
           body: {

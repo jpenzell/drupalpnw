@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 
 const HEADSHOT_STORAGE_URL = "https://wxgdptvgerwudxhihkzn.supabase.co/storage/v1/object/public/era-images/josh-headshot.jpeg";
 
@@ -37,7 +38,7 @@ export const preloadFirstEffect = async (): Promise<string | null> => {
   preloadPromise = (async () => {
     try {
       console.log("[Preload] Starting headshot transform preload...");
-      const { data, error } = await supabase.functions.invoke('transform-headshot', {
+      const { data, error } = await invokeFunction('transform-headshot', {
         body: { imageUrl: HEADSHOT_STORAGE_URL, effect: "cartoon" }
       });
       
@@ -112,7 +113,7 @@ export const useHeadshotTransform = (
     }, 100);
     
     try {
-      const { data, error } = await supabase.functions.invoke('transform-headshot', {
+      const { data, error } = await invokeFunction('transform-headshot', {
         body: { imageUrl, effect: effectId }
       });
 

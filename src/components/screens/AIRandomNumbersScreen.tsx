@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Bot, Loader2, Sparkles, Send, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { useSession } from "@/contexts/SessionContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,7 +43,7 @@ const runBackgroundLoop = async () => {
   
   while (!backgroundLoopStopped) {
     try {
-      const { data, error } = await supabase.functions.invoke("random-number-demo");
+      const { data, error } = await invokeFunction("random-number-demo");
       if (!error && data) {
         persistedRuns = [...persistedRuns, data as RunResult];
       }
@@ -68,7 +69,7 @@ export const prefetchAIRandomNumbers = async () => {
   isPrefetching = true;
   
   try {
-    const { data, error } = await supabase.functions.invoke("random-number-demo");
+    const { data, error } = await invokeFunction("random-number-demo");
     if (!error && data) {
       prefetchedResult = data as RunResult;
     }
@@ -122,7 +123,7 @@ export const AIRandomNumbersScreen = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke("random-number-demo");
+      const { data, error } = await invokeFunction("random-number-demo");
       if (!error && mountedRef.current) {
         const result = data as RunResult;
         setCurrentRun(result);

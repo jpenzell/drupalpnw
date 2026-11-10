@@ -3,6 +3,7 @@ import { Dice5, Users, Send, Sparkles, Lock, Clock, Cpu, Shuffle, Info, X } from
 import { useSession } from "@/contexts/SessionContext";
 import { usePoll } from "@/contexts/PollContext";
 import { supabase } from "@/integrations/supabase/client";
+import { gate } from "@/lib/gate/gateClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -270,11 +271,17 @@ export const TrueRandomScreen = () => {
     const num = parseInt(myNumber);
     if (isNaN(num) || num < 1 || num > 100 || !currentPoll?.is_open) return;
     
-    await supabase.from("responses").upsert({
-      poll_id: currentPoll.id,
-      participant_id: participantId,
-      value: { number: num }
-    }, { onConflict: "poll_id,participant_id" });
+    await gate.route(
+      async () => { await gate.submit("poll_response", { poll_id: currentPoll.id, value: { number: num } }); },
+      async () => {
+        await supabase.from("responses").upsert({
+          poll_id: currentPoll.id,
+          participant_id: participantId,
+          value: { number: num }
+        }, { onConflict: "poll_id,participant_id" });
+      },
+      undefined,
+    );
   };
 
   return (

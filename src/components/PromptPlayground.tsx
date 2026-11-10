@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { toast } from "sonner";
 
 export const PromptPlayground = () => {
@@ -22,7 +23,7 @@ export const PromptPlayground = () => {
     setResponse("");
 
     try {
-      const { data, error } = await supabase.functions.invoke("test-prompt", {
+      const { data, error } = await invokeFunction("test-prompt", {
         body: {
           prompt: prompt,
           context: "You are a helpful AI assistant for HR in healthcare. Be clear, practical, and professional.",

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Loader2, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@/contexts/SessionContext";
 import {
@@ -36,7 +37,7 @@ export const AIStoryDemoScreen = () => {
     const fullPrompt = `Write me a story. Keep it very short - 2-3 sentences, under 40 words.`;
     
     try {
-      const response = await supabase.functions.invoke('test-prompt', {
+      const response = await invokeFunction('test-prompt', {
         body: { 
           prompt: fullPrompt,
           context: "You are a creative storyteller. Write engaging stories. Be creative and surprising. Start the story immediately, don't repeat the prompt.",

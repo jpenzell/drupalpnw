@@ -5,6 +5,7 @@ import { usePoll } from "@/contexts/PollContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { toast } from "sonner";
 
 import talosImage from "@/assets/ancient-talos.jpg";
@@ -154,7 +155,7 @@ export const AIAgeRevealScreen = () => {
   const handleRegenerateImage = async (dream: AncientDream) => {
     setRegeneratingId(dream.id);
     try {
-      const { data, error } = await supabase.functions.invoke('regenerate-era-image', {
+      const { data, error } = await invokeFunction('regenerate-era-image', {
         body: {
           prompt: dream.prompt,
           era: dream.id,

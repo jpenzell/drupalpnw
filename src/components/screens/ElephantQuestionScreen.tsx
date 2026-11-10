@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { useSession } from "@/contexts/SessionContext";
 import { usePoll } from "@/contexts/PollContext";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
+import { gate } from "@/lib/gate/gateClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Sparkles, 
@@ -313,20 +315,26 @@ export const ElephantQuestionScreen = () => {
   const addWord = async () => {
     if (!newWord.trim() || !session?.id || !isMyTurn) return;
     
-    const nextPosition = words.length + 1;
-    await supabase.from('story_words').insert({
-      session_id: session.id,
-      word: newWord.trim(),
-      added_by: participantId,
-      position: nextPosition
-    });
+    await gate.route(
+      async () => { await gate.submit("story_word", { word: newWord.trim() }); },
+      async () => {
+        const nextPosition = words.length + 1;
+        await supabase.from('story_words').insert({
+          session_id: session.id,
+          word: newWord.trim(),
+          added_by: participantId,
+          position: nextPosition
+        });
     
-    const nextWriter = (currentWriterPosition % volunteers.length) + 1;
-    await supabase
-      .from('story_game_state')
-      .update({ current_writer_position: nextWriter })
-      .eq('session_id', session.id);
+        const nextWriter = (currentWriterPosition % volunteers.length) + 1;
+        await supabase
+          .from('story_game_state')
+          .update({ current_writer_position: nextWriter })
+          .eq('session_id', session.id);
     
+      },
+      undefined,
+    );
     setNewWord("");
   };
 
@@ -375,10 +383,17 @@ export const ElephantQuestionScreen = () => {
     );
     
     if (matchingVolunteer) {
-      await supabase
-        .from('story_volunteers')
-        .update({ participant_id: participantId })
-        .eq('id', matchingVolunteer.id);
+      // Gate on: identity is stable per lead, so there is nothing to reclaim.
+      await gate.route(
+        async () => {},
+        async () => {
+          await supabase
+            .from('story_volunteers')
+            .update({ participant_id: participantId })
+            .eq('id', matchingVolunteer.id);
+        },
+        undefined,
+      );
       
       toast({
         title: "Reconnected!",
@@ -427,7 +442,7 @@ export const ElephantQuestionScreen = () => {
       const responses: {model: string, answer: string}[] = [];
       
       for (const model of models) {
-        const { data, error } = await supabase.functions.invoke('test-prompt', {
+        const { data, error } = await invokeFunction('test-prompt', {
           body: { 
             prompt: FIXED_QUESTION,
             context: `You are ${model}. Answer this estimation question. State your assumptions clearly, then give a specific number. Be confident. Keep it to 2-3 sentences.`
