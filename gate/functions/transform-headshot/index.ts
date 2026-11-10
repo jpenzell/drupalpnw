@@ -6,7 +6,7 @@ import { denyWithoutInteractiveAccess, PNW2_CORS_ORIGIN } from "../_shared/guard
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": PNW2_CORS_ORIGIN,
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-pnw2-grant",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const EFFECT_PROMPTS: Record<string, string> = {

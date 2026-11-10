@@ -7,7 +7,7 @@ import { denyWithoutInteractiveAccess, PNW2_CORS_ORIGIN } from "../_shared/guard
 const corsHeaders = {
   "Access-Control-Allow-Origin": PNW2_CORS_ORIGIN,
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-pnw2-grant",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
