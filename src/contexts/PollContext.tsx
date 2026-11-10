@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "./SessionContext";
 import { Json } from "@/integrations/supabase/types";
+import { gate } from "@/lib/gate/gateClient";
 
 type PollType = "multiple_choice" | "slider" | "text";
 
@@ -39,6 +40,11 @@ interface PollContextType {
 
 const PollContext = createContext<PollContextType | null>(null);
 
+function mergeOwn(prev: PollResponse[], own: PollResponse[]): PollResponse[] {
+  const ids = new Set(own.map((r) => r.id));
+  return [...prev.filter((r) => !ids.has(r.id)), ...own];
+}
+
 export const PollProvider = ({ children }: { children: ReactNode }) => {
   const { session, participantId } = useSession();
   const [currentPoll, setCurrentPoll] = useState<Poll | null>(null);
@@ -60,6 +66,12 @@ export const PollProvider = ({ children }: { children: ReactNode }) => {
       .eq("poll_id", currentPoll.id)
       .then(({ data }) => {
         if (data) setResponses(data as PollResponse[]);
+        // Gate on: lead-keyed answers are not readable directly, so fetch our own through the gate.
+        if (gate.grant()) {
+          gate.submit("my_responses", { poll_id: currentPoll.id }).then((r) => {
+            if (r.ok && Array.isArray(r.data)) setResponses((prev) => mergeOwn(prev, r.data as PollResponse[]));
+          });
+        }
       });
 
     // Subscribe to new responses
@@ -184,6 +196,13 @@ export const PollProvider = ({ children }: { children: ReactNode }) => {
     async (value: Record<string, unknown>): Promise<boolean> => {
       if (!currentPoll || !currentPoll.is_open) return false;
 
+      return gate.route(
+        async () => {
+          const r = await gate.submit("poll_response", { poll_id: currentPoll.id, value });
+          if (r.ok && r.data) setResponses((prev) => mergeOwn(prev, [r.data as PollResponse]));
+          return r.ok;
+        },
+        async () => {
       try {
         const { error: upsertError } = await supabase.from("responses").upsert(
           {
@@ -202,6 +221,9 @@ export const PollProvider = ({ children }: { children: ReactNode }) => {
         console.error("Failed to submit response:", err);
         return false;
       }
+        },
+        false,
+      );
     },
     [currentPoll, participantId]
   );

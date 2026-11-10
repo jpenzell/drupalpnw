@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { RealtimeChannel, User } from "@supabase/supabase-js";
+import { GATE_MODE } from "@/lib/gate/config";
+import { createPresenterSessionGated, gate, isEmbeddedWindow, redirectStandaloneAttendee } from "@/lib/gate/gateClient";
 
 interface Session {
   id: string;
@@ -50,11 +52,13 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [fallbackId, setFallbackId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  // Server-derived identity from a MainSite grant (gate on only); null while the gate is off.
+  const [gateKey, setGateKey] = useState<string | null>(null);
 
   // The participant ID is auth.uid() when sign-in succeeded, or a locally
   // generated id when it did not — anonymous sign-up is rate-limited per IP
   // and a full room shares one venue IP, so joining must not depend on it.
-  const participantId = authUser?.id ?? fallbackId ?? "";
+  const participantId = gateKey ?? authUser?.id ?? fallbackId ?? "";
 
   // Auto sign-in anonymously on mount
   useEffect(() => {
@@ -149,6 +153,23 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     setError(null);
 
+    if (GATE_MODE !== "off") {
+      // Gate on: sessions come only from the password-checked presenter function.
+      try {
+        const created = await createPresenterSessionGated();
+        if (!created) {
+          setError("Presenter password required to start a live session.");
+          return null;
+        }
+        setSession(created);
+        setIsPresenter(true);
+        localStorage.setItem("presenter_session_id", created.id);
+        return created;
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
     try {
       let code = generateCode();
       let attempts = 0;
@@ -187,6 +208,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [authUser, participantId]);
 
   const joinSession = useCallback(async (code: string): Promise<boolean> => {
+    if (GATE_MODE !== "off" && redirectStandaloneAttendee(true)) return false;
     setIsLoading(true);
     setError(null);
 
@@ -201,6 +223,16 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (fetchError || !data) {
         setError("Session not found");
         return false;
+      }
+
+      if (GATE_MODE !== "off" && isEmbeddedWindow()) {
+        const grant = await gate.connect(data.code);
+        if (grant) {
+          setGateKey(grant.participantKey);
+        } else if (GATE_MODE === "enforce") {
+          setError("Please join through the event page to take part.");
+          return false;
+        }
       }
 
       setSession(data);
@@ -228,6 +260,10 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   }, [session, isPresenter]);
 
   const leaveSession = useCallback(() => {
+    if (GATE_MODE !== "off") {
+      gate.disconnect();
+      setGateKey(null);
+    }
     if (channel) {
       channel.unsubscribe();
     }
