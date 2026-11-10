@@ -1,6 +1,7 @@
 // Binds the gate core to the real backend client and the MainSite parent frame.
 // With GATE_MODE "off" (current), every export behaves exactly like the existing direct calls.
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { GATE_MODE, MAINSITE_CAPTURE_URL, MAINSITE_ORIGIN, RENEW_BEFORE_MS } from "./config";
 import { createGateCore, type TokenSource } from "./gateCore";
 import { createParentChannel, isEmbedded } from "./parentHandshake";
@@ -26,11 +27,36 @@ function frameTokenSource(): TokenSource | null {
   };
 }
 
+/** Like functions.invoke, but surfaces the gate's JSON error code from non-2xx replies. */
+async function invokeWithCode(name: string, opts: unknown) {
+  const r = await supabase.functions.invoke(name, opts as InvokeOptions);
+  const ctx = (r.error as { context?: unknown } | null)?.context;
+  if (r.error && ctx instanceof Response) {
+    try {
+      return { data: await ctx.clone().json(), error: r.error };
+    } catch {
+      /* not JSON */
+    }
+  }
+  return r;
+}
+
+const ERROR_COPY: Record<string, string> = {
+  session_inactive: "Live activity isn't running right now. You can still explore the deck and demos on your own.",
+  maintenance: "Interactive features are paused right now.",
+  access_revoked: "Your access has ended. Please reopen the presentation from the event page.",
+  access_required: "Your access has expired. Please reopen the presentation from the event page.",
+  policy_unavailable: "We couldn't confirm your access just now. Please try again in a moment.",
+};
+
 export const gate = createGateCore({
   mode: GATE_MODE,
-  invoke: (name, opts) => supabase.functions.invoke(name, opts as InvokeOptions),
+  invoke: invokeWithCode,
   tokens: frameTokenSource(),
   renewBeforeMs: RENEW_BEFORE_MS,
+  onError: (code) => {
+    if (ERROR_COPY[code]) toast(ERROR_COPY[code]);
+  },
 });
 
 /** Drop-in for supabase.functions.invoke on guarded paid functions: adds the attendee token when held. */
@@ -71,4 +97,23 @@ export async function createPresenterSessionGated(askPassword: () => string | nu
   return (res.data?.session ?? null) as {
     id: string; code: string; current_slide: string; is_active: boolean; created_at: string; presenter_id?: string;
   } | null;
+}
+
+/** Standalone deck entry: is this browser's login a password-authorized presenter? (server-checked) */
+export async function presenterAuthorized(): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return false;
+  const r = await supabase.functions.invoke("create-presenter-session", { body: { action: "status" } });
+  return !r.error && typeof r.data?.authorized_until === "string";
+}
+
+/** Deliberate presenter entry with the existing presentation password. Creates no session. */
+export async function authorizePresenter(password: string): Promise<boolean> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    const { error } = await supabase.auth.signInAnonymously();
+    if (error) return false;
+  }
+  const r = await supabase.functions.invoke("create-presenter-session", { body: { action: "authorize", password } });
+  return !r.error && typeof r.data?.authorized_until === "string";
 }

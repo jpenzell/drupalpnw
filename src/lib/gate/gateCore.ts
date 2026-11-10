@@ -15,7 +15,7 @@ export interface Access {
   token: string;
   expiresAt: number; // ms, as verified and returned by the server
   participantKey: string;
-  session: SessionRow; // canonical event session, chosen server-side
+  session: SessionRow | null; // live canonical session chosen server-side; null = none running (self-guided)
 }
 
 export type Invoker = (
@@ -37,6 +37,7 @@ export interface GateCoreDeps {
   clearTimer?: (id: unknown) => void;
   tokenWaitMs?: number;
   renewBeforeMs?: number;
+  onError?: (code: string) => void; // e.g. session_inactive → "live activity not running"
 }
 
 export type SubmitResult = { ok: true; data: any } | { ok: false; error: string };
@@ -63,7 +64,8 @@ export function createGateCore(deps: GateCoreDeps) {
       headers: { Authorization: `Bearer ${token}` },
     });
     const d = data?.data;
-    if (error || !data?.ok || !d?.participant_key || !d?.session?.id || typeof data.expires_at !== "string") return null;
+    if (error || !data?.ok || !d?.participant_key || typeof data.expires_at !== "string") return null;
+    if (d.session !== null && !d.session?.id) return null;
     const expiresAt = Date.parse(data.expires_at);
     if (!Number.isFinite(expiresAt) || expiresAt <= now()) return null;
     return { token, expiresAt, participantKey: d.participant_key, session: d.session };
@@ -122,12 +124,19 @@ export function createGateCore(deps: GateCoreDeps) {
 
   async function submit(action: string, payload: Record<string, unknown>): Promise<SubmitResult> {
     const a = access();
-    if (!a) return { ok: false, error: "access_required" };
+    if (!a) {
+      deps.onError?.("access_required");
+      return { ok: false, error: "access_required" };
+    }
     const { data, error } = await deps.invoke("submit-interaction", {
       body: { action, ...payload },
       headers: { Authorization: `Bearer ${a.token}` },
     });
-    if (error || !data?.ok) return { ok: false, error: "failed" };
+    if (error || !data?.ok) {
+      const code = typeof data?.error === "string" ? data.error : "failed";
+      deps.onError?.(code);
+      return { ok: false, error: code };
+    }
     return { ok: true, data: data.data };
   }
 

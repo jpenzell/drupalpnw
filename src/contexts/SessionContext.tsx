@@ -71,6 +71,19 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // Gate enforced: attendees use their MainSite token, so no automatic sign-in; presenters sign in
+      // deliberately with the presentation password on /presenter.
+      if (GATE_MODE === "enforce") {
+        let stored = localStorage.getItem("am_participant_id");
+        if (!stored) {
+          stored = crypto.randomUUID();
+          localStorage.setItem("am_participant_id", stored);
+        }
+        setFallbackId(stored);
+        setAuthReady(true);
+        return;
+      }
+
       // Sign in anonymously, retrying briefly against the rate limit
       let signInError: unknown = null;
       let user: User | null = null;
@@ -219,9 +232,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
         const access = await gate.connect();
         if (access) {
           setGateKey(access.participantKey);
-          setSession({ ...access.session });
           setIsPresenter(false);
-          return true;
+          if (access.session) {
+            setSession({ ...access.session });
+            return true;
+          }
+          // Post-event / between talks: the deck and demos stay open; only live activity is absent.
+          setError("Live activity isn't running right now.");
+          return false;
         }
         if (GATE_MODE === "enforce") {
           setError("Please join through the event page to take part.");
@@ -297,6 +315,17 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setParticipantCount(0);
     localStorage.removeItem("presenter_session_id");
   }, [session, isPresenter, channel]);
+
+  // Gate on, inside MainSite: pick up a live session that starts (or ends) while the deck is open.
+  useEffect(() => {
+    if (GATE_MODE === "off" || !isEmbeddedWindow()) return;
+    const off = gate.listen((a) => {
+      if (!a) return;
+      setGateKey(a.participantKey);
+      setSession((prev) => (a.session ? (prev?.id === a.session.id ? prev : { ...a.session }) : null));
+    });
+    return () => { off(); };
+  }, []);
 
   // Gate on, inside MainSite: join the event automatically (MainSite need not pass a code).
   useEffect(() => {
