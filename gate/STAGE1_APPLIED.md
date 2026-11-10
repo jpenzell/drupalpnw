@@ -17,7 +17,7 @@ Applied 2026-11-10 (UTC), starting from reviewed revision `d065f16`. This was St
 | `responses (poll_id, participant_id)` unique index, needed by the upsert | present | present | identical |
 
 - **Staged files:** the hashes in `bun gate/scripts/activation-map.ts` match `gate/ACCEPTANCE.md`.
-- **Tests:** `bash gate/test/run.sh` gave 69 pass, 0 fail.
+- **Tests:** `bash gate/test/run.sh` gave 69 pass, 0 fail. After the copy, the classification check in `guarded.test.ts` was extended to recognise the two gate functions as the gate itself; nothing else changed in the tests.
 
 ## Applied
 | Step | Evidence |
