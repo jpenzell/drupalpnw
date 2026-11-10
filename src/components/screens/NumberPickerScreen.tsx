@@ -2,6 +2,7 @@ import { Brain, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { useToast } from "@/hooks/use-toast";
 
 export const NumberPickerScreen = () => {
@@ -13,7 +14,7 @@ export const NumberPickerScreen = () => {
   const askAI = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('pick-number', {
+      const { data, error } = await invokeFunction('pick-number', {
         body: {
           prompt: "Pick a number at random from 1-50"
         }

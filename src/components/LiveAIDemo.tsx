@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2, Play, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { Button } from "@/components/ui/button";
 
 interface BasePanel {
@@ -50,7 +51,7 @@ export const LiveAIDemo = ({ variant, panelA, panelB, defaultCached = true }: Li
     }
     setter({ loading: true, text: "", isCached: false });
     try {
-      const { data, error } = await supabase.functions.invoke("live-ai-demo", {
+      const { data, error } = await invokeFunction("live-ai-demo", {
         body: { prompt: panel.prompt },
       });
       if (error || !data?.answer) {

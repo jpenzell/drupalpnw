@@ -1,59 +1,39 @@
-// STAGED — not deployed. Shared check for every attendee-reachable paid/interactive function.
-// Accepts EITHER a live grant (from redeem-access) OR proven presenter authority.
-// Presenter authority = a verified login token whose user owns an active session that was
-// created through create-presenter-session (password-checked), recorded in presenter_sessions.
-// A bare anonymous sign-in, or a caller-supplied presenter/session id, is never enough.
+// STAGED — the check every guarded paid function runs before doing any provider work.
+// Access = a live grant bound to an active session of this event, OR a presenter whose login
+// was authorized with the existing PRESENTATION_PASSWORD (server-recorded). A bare anonymous
+// sign-in, a caller-supplied presenter id or a caller-supplied session id is never enough.
+import { sha256Hex } from "./accessToken.ts";
+import { bearerOf, corsFor, GateDeps, GRANT_RE, jsonResponse, originAllowed } from "./gateHttp.ts";
 
-// deno-lint-ignore-file no-explicit-any
 export type Access =
-  | { kind: "attendee"; participantKey: string; sessionId: string | null }
-  | { kind: "presenter"; userId: string; sessionId: string };
+  | { kind: "attendee"; participant_key: string; session_id: string }
+  | { kind: "presenter"; user_id: string };
 
-export async function sha256Hex(s: string): Promise<string> {
-  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-/** `admin` is a service-role client; `userClient` verifies the caller's own login token. */
-export async function requireInteractiveAccess(req: Request, admin: any, userClient: any): Promise<Access | null> {
+export async function checkInteractiveAccess(
+  req: Request,
+  deps: Pick<GateDeps, "admin" | "getUserId">,
+): Promise<Access | null> {
   const grant = req.headers.get("x-pnw2-grant");
-  if (grant && grant.length <= 128) {
-    const { data } = await admin
-      .from("access_grants")
-      .select("participant_key, session_id, expires_at, revoked_at")
-      .eq("grant_hash", await sha256Hex(grant))
-      .maybeSingle();
-    if (data && !data.revoked_at && new Date(data.expires_at).getTime() > Date.now()) {
-      return { kind: "attendee", participantKey: data.participant_key, sessionId: data.session_id };
-    }
-  }
-
-  const auth = req.headers.get("Authorization");
-  if (auth?.startsWith("Bearer ")) {
-    const { data: claims } = await userClient.auth.getClaims(auth.slice(7));
-    const userId = claims?.claims?.sub;
-    if (userId) {
-      // Authority comes from the server-written row, not from anything the caller sends.
-      const { data: ps } = await admin
-        .from("presenter_sessions")
-        .select("session_id, sessions!inner(is_active, presenter_id)")
-        .eq("presenter_user_id", userId)
-        .eq("sessions.is_active", true)
-        .eq("sessions.presenter_id", userId)
-        .limit(1)
-        .maybeSingle();
-      if (ps) return { kind: "presenter", userId, sessionId: ps.session_id };
-    }
-  }
-  return null;
+  const grantHash = grant && GRANT_RE.test(grant) ? await sha256Hex(grant) : null;
+  const bearer = bearerOf(req);
+  const userId = bearer ? await deps.getUserId(bearer) : null;
+  if (!grantHash && !userId) return null;
+  const { data, error } = await deps.admin.rpc("gate_check_access", {
+    p_grant_hash: grantHash,
+    p_presenter_user: userId,
+  });
+  if (error || !data || typeof data !== "object") return null;
+  return data as Access;
 }
 
-export function allowedOrigin(req: Request, allowed: string[]): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  return {
-    "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : allowed[0],
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-pnw2-grant",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    Vary: "Origin",
-  };
+/** Returns a ready 401/403 Response when access is missing, or null to continue. */
+export async function denyWithoutAccess(
+  req: Request,
+  deps: Pick<GateDeps, "admin" | "getUserId" | "allowedOrigins">,
+): Promise<Response | null> {
+  const cors = corsFor(req, deps.allowedOrigins);
+  if (!originAllowed(req, deps.allowedOrigins)) return jsonResponse(cors, { error: "origin" }, 403);
+  const access = await checkInteractiveAccess(req, deps);
+  if (!access) return jsonResponse(cors, { error: "access_required" }, 401);
+  return null;
 }

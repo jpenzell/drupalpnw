@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Play, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { invokeFunction } from "@/lib/gate/gateClient";
 
 type Persona = { id: string; flag: string; shortLabel: string; label: string };
 
@@ -57,7 +58,7 @@ export const ProbabilityWordsPersonaScreen = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error } = await supabase.functions.invoke("probability-words-persona", {
+      const { data, error } = await invokeFunction("probability-words-persona", {
         body: {
           phrases: PHRASES.map((p) => p.text),
           personas: PERSONAS.map((p) => ({ id: p.id, label: p.label })),

@@ -13,6 +13,6 @@
 - [ ] Publish so the QR destination and today's phone fixes go live.
 
 # Interactive access gate (MainSite canonical)
-- [x] Stage 0: staged verifier, functions, migrations, handshake, synthetic tests (gate/, src/lib/gate).
-- [ ] Stage 1–4 activation — blocked on MainSite final contract (JWKS URL/kid, postMessage shape, claim names, test token).
-- [ ] Publish — held until gate is coordinated; legacy publish item folded into Stage 2.
+- [x] Stage 0: complete staged implementation — verifier, grant/session binding, all attendee actions, presenter proof via existing password, 12 guarded paid-function copies, retired notification, dormant page adapters, local-Postgres tests (55 pass).
+- [ ] Stage 1–4 activation — blocked on MainSite final contract (JWKS URL/kid/alg, postMessage names, claim names, iframe src/origin, synthetic test token).
+- [ ] Publish — held until coordinated; the earlier publish item is folded into Stage 2.

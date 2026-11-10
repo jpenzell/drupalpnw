@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { useSession } from "@/contexts/SessionContext";
 import { useHeadshotTransform, EFFECTS, preloadFirstEffect } from "@/hooks/useHeadshotTransform";
 import vineyardHero from "@/assets/vineyard-hero.jpg";
@@ -187,7 +188,7 @@ const ParticipantPhotoTransform = () => {
     }, 100);
     
     try {
-      const { data, error } = await supabase.functions.invoke('transform-headshot', {
+      const { data, error } = await invokeFunction('transform-headshot', {
         body: { imageUrl: uploadedImage, effect: effectId }
       });
 

@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -37,7 +38,7 @@ export const AIAssistant = ({ currentScreen }: AIAssistantProps) => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("presentation-ai-assistant", {
+      const { data, error } = await invokeFunction("presentation-ai-assistant", {
         body: {
           message: userMessage,
           context: currentScreen || "General Q&A",

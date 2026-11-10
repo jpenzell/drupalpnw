@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { invokeFunction } from "@/lib/gate/gateClient";
 
 
 type Row = {
@@ -61,7 +62,7 @@ async function runProbabilityWordsLive(): Promise<void> {
   if (inflight) return inflight;
   const { supabase } = await import("@/integrations/supabase/client");
   inflight = (async () => {
-    const { data, error } = await supabase.functions.invoke("probability-words-live", {
+    const { data, error } = await invokeFunction("probability-words-live", {
       body: { phrases: ROWS.map((r) => r.word) },
     });
     if (error) throw error;

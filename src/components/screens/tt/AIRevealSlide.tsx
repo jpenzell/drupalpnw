@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 import { useSceneCanvas } from "@/contexts/SceneCanvasContext";
+import { invokeFunction } from "@/lib/gate/gateClient";
 
 interface Beat {
   want: string;
@@ -183,7 +184,7 @@ export const AIRevealSlide = () => {
     setScenario(text);
     setLoading("analyze");
     try {
-      const { data, error } = await supabase.functions.invoke("scene-rehearsal", {
+      const { data, error } = await invokeFunction("scene-rehearsal", {
         body: { scenario: text, mode: "analyze" },
       });
       if (error) throw error;
@@ -254,7 +255,7 @@ export const AIRevealSlide = () => {
     if (!scenario.trim()) return;
     setLoading("analyze");
     try {
-      const { data, error } = await supabase.functions.invoke("scene-rehearsal", {
+      const { data, error } = await invokeFunction("scene-rehearsal", {
         body: { scenario: scenario.trim(), mode: "analyze" },
       });
       if (error) throw error;
@@ -285,7 +286,7 @@ export const AIRevealSlide = () => {
               .join(" | ")}`
         )
         .join("\n")}`;
-      const { data, error } = await supabase.functions.invoke("scene-rehearsal", {
+      const { data, error } = await invokeFunction("scene-rehearsal", {
         body: { scenario: summary, mode: "rehearse" },
       });
       if (error) throw error;

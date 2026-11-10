@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSession } from "@/contexts/SessionContext";
 import { supabase } from "@/integrations/supabase/client";
+import { gate } from "@/lib/gate/gateClient";
 import {
   Hand,
   PenTool,
@@ -241,12 +242,18 @@ export const OneWordStoryScreen = () => {
     const nextPosition = volunteers.length + 1;
     if (nextPosition > gameState.max_volunteers) return;
     
-    await supabase.from('story_volunteers').insert({
-      session_id: session.id,
-      participant_id: participantId,
-      participant_name: volunteerName.trim(),
-      position: nextPosition
-    });
+    await gate.route(
+      async () => { await gate.submit("story_volunteer", { name: volunteerName.trim(), mode: "slot" }); },
+      async () => {
+        await supabase.from('story_volunteers').insert({
+          session_id: session.id,
+          participant_id: participantId,
+          participant_name: volunteerName.trim(),
+          position: nextPosition
+        });
+      },
+      undefined,
+    );
     setVolunteerName("");
   };
 
@@ -256,12 +263,18 @@ export const OneWordStoryScreen = () => {
     if (myCandidacy) return; // already in
     // Pool position = POOL_OFFSET + current candidate count, just to keep them unique-ordered
     const poolPosition = POOL_OFFSET + candidates.length + 1;
-    await supabase.from("story_volunteers").insert({
-      session_id: session.id,
-      participant_id: participantId,
-      participant_name: volunteerName.trim(),
-      position: poolPosition,
-    });
+    await gate.route(
+      async () => { await gate.submit("story_volunteer", { name: volunteerName.trim(), mode: "lottery" }); },
+      async () => {
+        await supabase.from("story_volunteers").insert({
+          session_id: session.id,
+          participant_id: participantId,
+          participant_name: volunteerName.trim(),
+          position: poolPosition,
+        });
+      },
+      undefined,
+    );
     setVolunteerName("");
   };
 
@@ -368,10 +381,17 @@ export const OneWordStoryScreen = () => {
     );
     
     if (matchingVolunteer) {
-      await supabase
-        .from('story_volunteers')
-        .update({ participant_id: participantId })
-        .eq('id', matchingVolunteer.id);
+      // Gate on: identity is stable per lead, so there is nothing to reclaim.
+      await gate.route(
+        async () => {},
+        async () => {
+          await supabase
+            .from('story_volunteers')
+            .update({ participant_id: participantId })
+            .eq('id', matchingVolunteer.id);
+        },
+        undefined,
+      );
       
       setReconnectName("");
       setShowReconnect(false);
@@ -381,21 +401,27 @@ export const OneWordStoryScreen = () => {
   const addWord = async () => {
     if (!newWord.trim() || !session?.id || !isMyTurn) return;
     
-    const nextPosition = words.length + 1;
-    await supabase.from('story_words').insert({
-      session_id: session.id,
-      word: newWord.trim(),
-      added_by: participantId,
-      position: nextPosition
-    });
+    await gate.route(
+      async () => { await gate.submit("story_word", { word: newWord.trim() }); },
+      async () => {
+        const nextPosition = words.length + 1;
+        await supabase.from('story_words').insert({
+          session_id: session.id,
+          word: newWord.trim(),
+          added_by: participantId,
+          position: nextPosition
+        });
     
-    // Advance to next writer
-    const nextWriter = (gameState.current_writer_position % volunteers.length) + 1;
-    await supabase
-      .from('story_game_state')
-      .update({ current_writer_position: nextWriter })
-      .eq('session_id', session.id);
+        // Advance to next writer
+        const nextWriter = (gameState.current_writer_position % volunteers.length) + 1;
+        await supabase
+          .from('story_game_state')
+          .update({ current_writer_position: nextWriter })
+          .eq('session_id', session.id);
     
+      },
+      undefined,
+    );
     setNewWord("");
   };
 

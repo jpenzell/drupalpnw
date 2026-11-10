@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Loader2, Sparkles, RotateCcw, MessageSquareQuote, X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeFunction } from "@/lib/gate/gateClient";
 import { toast } from "sonner";
 import { ParticleBackground } from "@/components/ParticleBackground";
 
@@ -183,7 +184,7 @@ const RehearsalTool = () => {
     if (!scenario.trim()) return;
     setLoading("analyze");
     try {
-      const { data, error } = await supabase.functions.invoke("scene-rehearsal", {
+      const { data, error } = await invokeFunction("scene-rehearsal", {
         body: { scenario: scenario.trim(), mode: "analyze" },
       });
       if (error) throw error;
@@ -207,7 +208,7 @@ const RehearsalTool = () => {
             .map((b) => `want="${b.want}" action="${b.action}" obstacle="${b.obstacle}"`).join("; ")}`)
           .join(" | ")}`)
         .join("\n")}`;
-      const { data, error } = await supabase.functions.invoke("scene-rehearsal", {
+      const { data, error } = await invokeFunction("scene-rehearsal", {
         body: { scenario: summary, mode: "rehearse" },
       });
       if (error) throw error;
