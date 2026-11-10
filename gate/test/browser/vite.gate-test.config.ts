@@ -14,8 +14,12 @@ const OUT = "/tmp/gatetest";
 
 function enforcedConfig(): string {
   const src = readFileSync(REAL_CONFIG, "utf8");
-  const flipped = src.replace('export const GATE_MODE = "off" as GateMode;', 'export const GATE_MODE = "enforce" as GateMode;');
-  if (flipped === src) throw new Error("GATE_MODE line not found — refusing to build an unverified variant");
+  // Accepts the source at any stage ("off" or "dual"); exactly one GATE_MODE line must match.
+  const line = /^export const GATE_MODE = "(off|dual|enforce)" as GateMode;$/m;
+  if ((src.match(new RegExp(line.source, "gm")) ?? []).length !== 1) {
+    throw new Error("GATE_MODE line not found — refusing to build an unverified variant");
+  }
+  const flipped = src.replace(line, 'export const GATE_MODE = "enforce" as GateMode;');
   mkdirSync(OUT, { recursive: true });
   const file = path.join(OUT, "config.enforce.ts");
   writeFileSync(file, flipped);
