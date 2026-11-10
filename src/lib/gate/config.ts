@@ -4,7 +4,7 @@
 //   "enforce" — attendee writes require the MainSite token; standalone joins go to MainSite capture.
 // Change only at the coordinated stage in gate/README.md, together with the backend step.
 export type GateMode = "off" | "dual" | "enforce";
-export const GATE_MODE = "off" as GateMode;
+export const GATE_MODE = "dual" as GateMode;
 
 // Exact parent origin (www; verified that the root does not redirect away from www).
 export const MAINSITE_ORIGIN = "https://www.joshpenzell.com";
