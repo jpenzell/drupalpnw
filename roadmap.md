@@ -13,6 +13,6 @@
 - [ ] Publish so the QR destination and today's phone fixes go live.
 
 # Interactive access gate (MainSite canonical)
-- [x] Stage 0: complete staged implementation — verifier, grant/session binding, all attendee actions, presenter proof via existing password, 12 guarded paid-function copies, retired notification, dormant page adapters, local-Postgres tests (55 pass).
-- [ ] Stage 1–4 activation — blocked on MainSite final contract (JWKS URL/kid/alg, postMessage names, claim names, iframe src/origin, synthetic test token).
-- [ ] Publish — held until coordinated; the earlier publish item is folded into Stage 2.
+- [x] Stage 0: staged implementation aligned to the final MainSite contract (Ed25519, per-action introspection, server-side canonical session, nonce handshake, maintenance-only rollback, 12 guarded paid functions) — 64 synthetic tests pass.
+- [ ] MainSite: issuer set to https://www.joshpenzell.com; apex → www redirect (apex currently serves without redirecting); gate ON + JWKS live; introspect rate budget accepted — blocked on MainSite.
+- [ ] Stages 1–4 activation and publish — blocked on coordinated window and approval.
