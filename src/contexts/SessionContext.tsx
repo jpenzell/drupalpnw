@@ -213,6 +213,22 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
 
     try {
+      if (GATE_MODE !== "off" && isEmbeddedWindow()) {
+        // Gate on, inside MainSite: the server verifies the MainSite token and picks the event's
+        // canonical session; a typed or linked code is never trusted for attendee binding.
+        const access = await gate.connect();
+        if (access) {
+          setGateKey(access.participantKey);
+          setSession({ ...access.session });
+          setIsPresenter(false);
+          return true;
+        }
+        if (GATE_MODE === "enforce") {
+          setError("Please join through the event page to take part.");
+          return false;
+        }
+      }
+
       const { data, error: fetchError } = await supabase
         .from("sessions")
         .select("*")
@@ -223,16 +239,6 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
       if (fetchError || !data) {
         setError("Session not found");
         return false;
-      }
-
-      if (GATE_MODE !== "off" && isEmbeddedWindow()) {
-        const grant = await gate.connect(data.code);
-        if (grant) {
-          setGateKey(grant.participantKey);
-        } else if (GATE_MODE === "enforce") {
-          setError("Please join through the event page to take part.");
-          return false;
-        }
       }
 
       setSession(data);
@@ -291,6 +297,14 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
     setParticipantCount(0);
     localStorage.removeItem("presenter_session_id");
   }, [session, isPresenter, channel]);
+
+  // Gate on, inside MainSite: join the event automatically (MainSite need not pass a code).
+  useEffect(() => {
+    if (GATE_MODE === "off" || !authReady || session || isPresenter || !isEmbeddedWindow()) return;
+    if (localStorage.getItem("presenter_session_id")) return;
+    void joinSession("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady]);
 
   // Check for existing presenter session on mount (after auth ready)
   useEffect(() => {

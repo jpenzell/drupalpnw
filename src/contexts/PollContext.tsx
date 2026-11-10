@@ -67,7 +67,7 @@ export const PollProvider = ({ children }: { children: ReactNode }) => {
       .then(({ data }) => {
         if (data) setResponses(data as PollResponse[]);
         // Gate on: lead-keyed answers are not readable directly, so fetch our own through the gate.
-        if (gate.grant()) {
+        if (gate.access()) {
           gate.submit("my_responses", { poll_id: currentPoll.id }).then((r) => {
             if (r.ok && Array.isArray(r.data)) setResponses((prev) => mergeOwn(prev, r.data as PollResponse[]));
           });
