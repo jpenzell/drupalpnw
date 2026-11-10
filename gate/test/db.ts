@@ -69,10 +69,8 @@ export function rpcAdapter(sql: SQL): Rpc {
     async rpc(fn: string, args: Record<string, unknown>): Promise<RpcResult> {
       if (!/^[a-z_]+$/.test(fn)) throw new Error("bad fn");
       const keys = Object.keys(args);
-      const values = keys.map((k) => {
-        const v = args[k];
-        return v !== null && typeof v === "object" ? JSON.stringify(v) : v;
-      });
+      // Objects go through as-is (Bun encodes them as JSON for jsonb), mirroring supabase-js.
+      const values = keys.map((k) => args[k]);
       const call = `SELECT public.${fn}(${keys.map((k, i) => `${k} => $${i + 1}`).join(", ")}) AS r`;
       try {
         const rows = await as(sql, "service_role", null, (tx) => tx.unsafe(call, values as never[]));
