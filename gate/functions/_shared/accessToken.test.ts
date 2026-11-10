@@ -1,79 +1,97 @@
 // Synthetic keys and tokens only — no network, no live data.
-import { test } from "node:test";
+import { test } from "bun:test";
 import assert from "node:assert/strict";
-import { AccessTokenError, PNW2_POLICY, grantExpiry, participantKey, verifyAccessToken } from "./accessToken";
+import { AccessTokenError, PNW2_POLICY, grantExpiry, participantKey, verifyAccessToken } from "./accessToken.ts";
+import { claims, enc, keypair } from "../../test/tokens.ts";
 
-const enc = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
 const NOW = 1_800_000_000;
-
-async function keypair(alg: "EdDSA" | "ES256", kid: string) {
-  const kp = (alg === "EdDSA"
-    ? await crypto.subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"])
-    : await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"])) as CryptoKeyPair;
-  const jwk = { ...(await crypto.subtle.exportKey("jwk", kp.publicKey)), kid, alg };
-  const sign = async (header: object, claims: object) => {
-    const data = `${enc(header)}.${enc(claims)}`;
-    const sig = alg === "EdDSA"
-      ? await crypto.subtle.sign({ name: "Ed25519" }, kp.privateKey, new TextEncoder().encode(data))
-      : await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, kp.privateKey, new TextEncoder().encode(data));
-    return `${data}.${Buffer.from(sig).toString("base64url")}`;
-  };
-  return { jwk, sign };
-}
-
-const good = (o: Record<string, unknown> = {}) => ({
-  iss: "https://www.joshpenzell.com", aud: "pnw2-interactive", presentation: "16460", workshop: "9503",
-  sub: "lead-opaque-1", jti: "jti-1", iat: NOW, exp: NOW + 300, ...o,
-});
+const good = (o: Record<string, unknown> = {}) => claims(NOW, { jti: "jti-1", ...o });
 
 async function expectCode(p: Promise<unknown>, code: string) {
-  await assert.rejects(p, (e: unknown) => e instanceof AccessTokenError && e.code === code);
+  await assert.rejects(p, (e: unknown) => e instanceof AccessTokenError && (e as AccessTokenError).code === code);
+}
+
+async function setup() {
+  const k = await keypair("EdDSA", "k1");
+  const keys = { keys: [k.jwk] };
+  const v = async (o: Record<string, unknown>, at = NOW, header: object = k.header) =>
+    verifyAccessToken(await k.sign(header, good(o)), keys, PNW2_POLICY, at);
+  return { k, keys, v };
 }
 
 test("accepts a valid EdDSA and ES256 token; grant expires exactly at token exp", async () => {
   for (const alg of ["EdDSA", "ES256"] as const) {
     const k = await keypair(alg, "k1");
-    const v = await verifyAccessToken(await k.sign({ alg, kid: "k1" }, good()), { keys: [k.jwk] }, PNW2_POLICY, NOW + 10);
+    const v = await verifyAccessToken(await k.sign(k.header, good()), { keys: [k.jwk] }, PNW2_POLICY, NOW + 10);
     assert.equal(v.sub, "lead-opaque-1");
+    assert.deepEqual(v.scope, { presentation: "16460", workshop: "9503" });
     assert.equal(grantExpiry(v).getTime(), (NOW + 300) * 1000);
   }
 });
 
-test("rejects wrong issuer, audience, presentation, workshop", async () => {
-  const k = await keypair("EdDSA", "k1");
-  const keys = { keys: [k.jwk] };
-  const h = { alg: "EdDSA", kid: "k1" };
-  await expectCode(verifyAccessToken(await k.sign(h, good({ iss: "https://joshpenzell.com" })), keys, PNW2_POLICY, NOW), "wrong_issuer");
-  await expectCode(verifyAccessToken(await k.sign(h, good({ aud: "other" })), keys, PNW2_POLICY, NOW), "wrong_audience");
-  await expectCode(verifyAccessToken(await k.sign(h, good({ presentation: "1" })), keys, PNW2_POLICY, NOW), "wrong_scope");
-  await expectCode(verifyAccessToken(await k.sign(h, good({ workshop: "1" })), keys, PNW2_POLICY, NOW), "wrong_scope");
+test("issuer and audience must match exactly", async () => {
+  const { v } = await setup();
+  for (const iss of ["https://joshpenzell.com", "https://www.joshpenzell.com/", "http://www.joshpenzell.com", 1, undefined]) {
+    await expectCode(v({ iss }), "wrong_issuer");
+  }
+  for (const aud of ["other", "pnw2-interactive ", ["pnw2-interactive"], undefined]) {
+    await expectCode(v({ aud }), "wrong_audience");
+  }
 });
 
-test("rejects tokens living longer than five minutes, expired, or not yet valid", async () => {
-  const k = await keypair("EdDSA", "k1");
-  const keys = { keys: [k.jwk] };
-  const h = { alg: "EdDSA", kid: "k1" };
-  await expectCode(verifyAccessToken(await k.sign(h, good({ exp: NOW + 301 })), keys, PNW2_POLICY, NOW), "lifetime_too_long");
-  await expectCode(verifyAccessToken(await k.sign(h, good()), keys, PNW2_POLICY, NOW + 300 + 60), "expired");
-  await expectCode(verifyAccessToken(await k.sign(h, good({ nbf: NOW + 120 })), keys, PNW2_POLICY, NOW), "not_yet_valid");
+test("presentation and workshop scope are required and exact", async () => {
+  const { v } = await setup();
+  assert.equal((await v({ presentation: 16460, workshop: 9503 })).sub, "lead-opaque-1"); // integer form accepted
+  for (const o of [{ presentation: "1" }, { workshop: "1" }, { presentation: undefined }, { workshop: undefined },
+                   { presentation: { v: "16460" } }, { presentation: 16460.5 }, { workshop: ["9503"] }]) {
+    await expectCode(v(o), "wrong_scope");
+  }
 });
 
-test("rejects alg none, HS256, unknown kid, tampered signature, personal data", async () => {
-  const k = await keypair("EdDSA", "k1");
-  const keys = { keys: [k.jwk] };
-  const t = await k.sign({ alg: "EdDSA", kid: "k1" }, good());
-  await expectCode(verifyAccessToken(`${enc({ alg: "none", kid: "k1" })}.${enc(good())}.`, keys, PNW2_POLICY, NOW), "unsupported_alg");
+test("timestamps: non-integer, negative, zero, non-numeric, missing or misordered are rejected", async () => {
+  const { v } = await setup();
+  for (const o of [{ iat: NOW + 0.5 }, { exp: NOW + 299.9 }, { iat: -5 }, { iat: 0 }, { exp: "1800000300" },
+                   { iat: null }, { exp: undefined }, { iat: 1e300 }, { exp: NOW }, { exp: NOW - 1 },
+                   { nbf: NOW - 1 }, { nbf: NOW + 300 }, { nbf: 1.5 }, { nbf: "now" }]) {
+    await expectCode(v(o), "invalid_timestamps");
+  }
+});
+
+test("lifetime over five minutes, future iat/nbf and expiry are rejected", async () => {
+  const { v } = await setup();
+  await expectCode(v({ exp: NOW + 301 }), "lifetime_too_long");
+  await expectCode(v({}, NOW - 61), "not_yet_valid"); // iat in the future beyond skew
+  await expectCode(v({ nbf: NOW + 120 }), "not_yet_valid");
+  await expectCode(v({}, NOW + 300), "expired"); // no grace after exp
+  assert.ok(await v({}, NOW - 59)); // within the iat skew allowance
+});
+
+test("rejects alg none, HS256, unknown kid, header key injection, tampered payload, personal data", async () => {
+  const { k, keys, v } = await setup();
+  const t = await k.sign(k.header, good());
+  await expectCode(verifyAccessToken(`${enc({ alg: "none", kid: "k1" })}.${enc(good())}.AAAA`, keys, PNW2_POLICY, NOW), "unsupported_alg");
   await expectCode(verifyAccessToken(`${enc({ alg: "HS256", kid: "k1" })}.${enc(good())}.AAAA`, keys, PNW2_POLICY, NOW), "unsupported_alg");
-  await expectCode(verifyAccessToken(await k.sign({ alg: "EdDSA", kid: "k2" }, good()), keys, PNW2_POLICY, NOW), "unknown_kid");
+  await expectCode(v({}, NOW, { alg: "EdDSA", kid: "k2" }), "unknown_kid");
+  await expectCode(v({}, NOW, { alg: "ES256", kid: "k1" }), "unsupported_alg"); // key pinned to EdDSA
+  await expectCode(v({}, NOW, { alg: "EdDSA", kid: "k1", jku: "https://evil.example/jwks" }), "malformed");
+  await expectCode(v({}, NOW, { alg: "EdDSA", kid: "k1", crit: ["x"] }), "malformed");
   const [h, , s] = t.split(".");
   await expectCode(verifyAccessToken(`${h}.${enc(good({ sub: "attacker" }))}.${s}`, keys, PNW2_POLICY, NOW), "bad_signature");
-  await expectCode(verifyAccessToken(await k.sign({ alg: "EdDSA", kid: "k1" }, good({ email: "a@b.c" })), keys, PNW2_POLICY, NOW), "personal_data_in_token");
+  await expectCode(verifyAccessToken(`${h}.${enc(good())}`, keys, PNW2_POLICY, NOW), "malformed");
+  await expectCode(verifyAccessToken("a.b.c!", keys, PNW2_POLICY, NOW), "malformed");
+  for (const f of ["email", "name", "given_name"]) await expectCode(v({ [f]: "x" }), "personal_data_in_token");
+  await expectCode(v({ sub: "" }), "missing_claims");
+  await expectCode(v({ jti: undefined }), "missing_claims");
+  await expectCode(v({ session_code: "ab" }), "malformed");
+  assert.equal((await v({ session_code: "abcd" })).sessionCode, "ABCD");
 });
 
-test("response identity is derived from the lead, not the client", async () => {
-  const k = await keypair("EdDSA", "k1");
-  const v1 = await verifyAccessToken(await k.sign({ alg: "EdDSA", kid: "k1" }, good({ jti: "a" })), { keys: [k.jwk] }, PNW2_POLICY, NOW);
-  const v2 = await verifyAccessToken(await k.sign({ alg: "EdDSA", kid: "k1" }, good({ jti: "b" })), { keys: [k.jwk] }, PNW2_POLICY, NOW);
+test("response identity is derived from the lead, not the client, and is stable across tokens", async () => {
+  const { v } = await setup();
+  const v1 = await v({ jti: "a" });
+  const v2 = await v({ jti: "b" });
+  const v3 = await v({ jti: "c", sub: "other-lead" });
   assert.equal(await participantKey(PNW2_POLICY.issuer, v1), await participantKey(PNW2_POLICY.issuer, v2));
+  assert.notEqual(await participantKey(PNW2_POLICY.issuer, v1), await participantKey(PNW2_POLICY.issuer, v3));
   assert.match(await participantKey(PNW2_POLICY.issuer, v1), /^lead_[0-9a-f]{32}$/);
 });
