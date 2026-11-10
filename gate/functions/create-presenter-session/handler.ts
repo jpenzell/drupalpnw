@@ -1,8 +1,9 @@
 // STAGED — presenter authority from the EXISTING PRESENTATION_PASSWORD secret (same comparison as
-// verify-password) plus a verified login. "authorize" records the login server-side for 12 hours;
-// "create_session" then creates a session bound to this presentation/workshop. Attendees never
-// reach this path, and nothing here creates sessions for them.
-import { bearerOf, corsFor, GateDeps, jsonResponse, mapDbError, readJson } from "../_shared/gateHttp.ts";
+// verify-password) plus a verified Lovable Cloud login. "authorize" records the login server-side
+// for 12 hours; "create_session" creates the event's canonical session. Attendee (MainSite) tokens
+// are refused here outright: they never grant host actions.
+import { looksLikeMainSiteToken } from "../_shared/accessToken.ts";
+import { bearerOf, corsFor, type GateDeps, jsonResponse, mapDbError, readJson } from "../_shared/gateHttp.ts";
 
 export function timingSafeEqual(a: string, b: string): boolean {
   const ea = new TextEncoder().encode(a);
@@ -20,6 +21,7 @@ export async function handleCreatePresenterSession(req: Request, deps: GateDeps)
   if (!origin || !deps.allowedOrigins.includes(origin)) return jsonResponse(cors, { error: "origin" }, 403);
 
   const bearer = bearerOf(req);
+  if (bearer && looksLikeMainSiteToken(bearer)) return jsonResponse(cors, { error: "attendee_token_not_allowed" }, 403);
   const userId = bearer ? await deps.getUserId(bearer) : null;
   if (!userId) return jsonResponse(cors, { error: "unauthorized" }, 401);
 
@@ -28,10 +30,10 @@ export async function handleCreatePresenterSession(req: Request, deps: GateDeps)
 
   if (body.action === "authorize") {
     if (!deps.presentationPassword) return jsonResponse(cors, { error: "not_configured" }, 503);
-    if (typeof body.password !== "string" || body.password.length === 0 || body.password.length > 100) {
+    if (typeof body.password !== "string" || body.password.length === 0 || body.password.length > 100 ||
+        !timingSafeEqual(body.password, deps.presentationPassword)) {
       return jsonResponse(cors, { error: "unauthorized" }, 401);
     }
-    if (!timingSafeEqual(body.password, deps.presentationPassword)) return jsonResponse(cors, { error: "unauthorized" }, 401);
     const { data, error } = await deps.admin.rpc("gate_authorize_presenter", { p_user: userId });
     if (error) {
       const m = mapDbError(error.message);

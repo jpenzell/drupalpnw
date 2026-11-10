@@ -1,14 +1,18 @@
 -- STAGED — Stage 1 only (see gate/README.md). Purely additive: no existing table, policy or
--- grant is touched, so the live deck keeps working exactly as today. Contains no row data;
--- configuration rows are written by gate/data/*.sql at the matching stage.
+-- grant is touched, so the live deck keeps working exactly as today. No row data here; the
+-- configuration row is written by gate/data/*.sql at the matching stage.
 -- Every gate_* function is SECURITY DEFINER and executable ONLY by service_role (edge functions),
--- so no browser role gains a new capability from this file.
+-- so no browser role gains any capability from this file.
+-- Attendee authority is NOT stored here: MainSite owns it, and the edge function verifies the
+-- signed token and introspects it live on every action before calling these functions with the
+-- server-derived participant key. Sessions are chosen server-side (the event's canonical one).
 
 CREATE TABLE public.gate_config (
   id integer PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-  redeem_enabled boolean NOT NULL DEFAULT false,
-  presentation text NOT NULL,
-  workshop text NOT NULL,
+  interactive_enabled boolean NOT NULL DEFAULT false, -- false = maintenance: attendee actions denied
+  presentation_id integer NOT NULL,
+  workshop_id integer NOT NULL,
+  canonical_session_id uuid REFERENCES public.sessions(id) ON DELETE SET NULL,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 GRANT ALL ON public.gate_config TO service_role;
@@ -25,29 +29,12 @@ ALTER TABLE public.presenter_authorizations ENABLE ROW LEVEL SECURITY;
 CREATE TABLE public.presenter_sessions (
   session_id uuid PRIMARY KEY REFERENCES public.sessions(id) ON DELETE CASCADE,
   presenter_user_id uuid NOT NULL,
-  presentation text NOT NULL,
-  workshop text NOT NULL,
+  presentation_id integer NOT NULL,
+  workshop_id integer NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 GRANT ALL ON public.presenter_sessions TO service_role;
 ALTER TABLE public.presenter_sessions ENABLE ROW LEVEL SECURITY;
-
-CREATE TABLE public.access_grants (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  jti text NOT NULL UNIQUE,                 -- persisted forever: a replayed token always fails
-  lead_ref text NOT NULL,                   -- opaque MainSite sub; never a name or email
-  participant_key text NOT NULL,            -- server-derived response identity
-  presentation text NOT NULL,
-  workshop text NOT NULL,
-  session_id uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE, -- always bound
-  grant_hash text NOT NULL UNIQUE,          -- sha256 of the opaque grant held in browser memory
-  expires_at timestamptz NOT NULL,          -- equals the token exp; never extended
-  revoked_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX access_grants_lead_ref_idx ON public.access_grants (lead_ref);
-GRANT ALL ON public.access_grants TO service_role;
-ALTER TABLE public.access_grants ENABLE ROW LEVEL SECURITY;
 
 -- Used by RLS after enforcement: presenter of THIS session, and the session was created through
 -- the password-checked function (a bare anonymous sign-in that owns a session is not enough).
@@ -60,84 +47,46 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
   )
 $$;
 
-CREATE FUNCTION public.gate_redeem(
-  p_jti text, p_lead_ref text, p_participant_key text, p_presentation text, p_workshop text,
-  p_session_code text, p_grant_hash text, p_expires_at timestamptz
-) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-  cfg public.gate_config%ROWTYPE;
-  v_session uuid;
+-- Internal: the canonical session of the configured PNW event, chosen server-side only.
+CREATE FUNCTION public.gate_attendee_session(p_participant_key text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE cfg public.gate_config%ROWTYPE; v_session uuid;
 BEGIN
-  SELECT * INTO cfg FROM public.gate_config WHERE id = 1;
-  IF NOT FOUND OR cfg.redeem_enabled IS NOT TRUE THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:not_configured';
-  END IF;
-  IF p_jti IS NULL OR length(p_jti) NOT BETWEEN 1 AND 200
-     OR p_lead_ref IS NULL OR length(p_lead_ref) NOT BETWEEN 1 AND 200
-     OR p_participant_key IS NULL OR p_participant_key !~ '^lead_[0-9a-f]{32}$'
-     OR p_grant_hash IS NULL OR p_grant_hash !~ '^[0-9a-f]{64}$' THEN
+  IF p_participant_key IS NULL OR p_participant_key !~ '^lead_[0-9a-f]{32}$' THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:malformed';
   END IF;
-  IF p_presentation IS DISTINCT FROM cfg.presentation OR p_workshop IS DISTINCT FROM cfg.workshop THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:wrong_scope';
-  END IF;
-  IF p_expires_at IS NULL OR p_expires_at <= now() THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:expired';
-  END IF;
-  IF p_expires_at > now() + interval '6 minutes' THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:lifetime_too_long';
-  END IF;
-  IF p_session_code IS NULL OR p_session_code !~ '^[A-Z0-9]{4,8}$' THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:session_required';
-  END IF;
-
+  SELECT * INTO cfg FROM public.gate_config WHERE id = 1;
+  IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:not_configured'; END IF;
+  IF cfg.interactive_enabled IS NOT TRUE THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:maintenance'; END IF;
   SELECT s.id INTO v_session
   FROM public.sessions s JOIN public.presenter_sessions ps ON ps.session_id = s.id
-  WHERE s.code = p_session_code AND s.is_active IS TRUE
-    AND ps.presentation = cfg.presentation AND ps.workshop = cfg.workshop;
-  IF v_session IS NULL THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:session_inactive';
-  END IF;
-
-  BEGIN
-    INSERT INTO public.access_grants
-      (jti, lead_ref, participant_key, presentation, workshop, session_id, grant_hash, expires_at)
-    VALUES
-      (p_jti, p_lead_ref, p_participant_key, cfg.presentation, cfg.workshop, v_session, p_grant_hash, p_expires_at);
-  EXCEPTION WHEN unique_violation THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:replayed';
-  END;
-
-  RETURN jsonb_build_object('session_id', v_session, 'participant_key', p_participant_key, 'expires_at', p_expires_at);
+  WHERE s.id = cfg.canonical_session_id AND s.is_active IS TRUE
+    AND ps.presentation_id = cfg.presentation_id AND ps.workshop_id = cfg.workshop_id;
+  IF v_session IS NULL THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:session_inactive'; END IF;
+  RETURN v_session;
 END $$;
 
--- Internal: a grant is usable only while unexpired, unrevoked, and its bound session is still
--- active and still belongs to the configured presentation/workshop.
-CREATE FUNCTION public.gate_resolve(p_grant_hash text, OUT o_participant_key text, OUT o_session_id uuid)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-BEGIN
-  SELECT g.participant_key, g.session_id INTO o_participant_key, o_session_id
-  FROM public.access_grants g
-  JOIN public.sessions s ON s.id = g.session_id
-  JOIN public.presenter_sessions ps ON ps.session_id = s.id
-  WHERE g.grant_hash = p_grant_hash AND g.revoked_at IS NULL AND g.expires_at > now()
-    AND s.is_active IS TRUE AND ps.presentation = g.presentation AND ps.workshop = g.workshop;
-  IF o_participant_key IS NULL THEN
-    RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:grant_invalid';
-  END IF;
-END $$;
-
--- For guarded paid functions: a live bound grant, or a password-authorized presenter.
-CREATE FUNCTION public.gate_check_access(p_grant_hash text, p_presenter_user uuid)
+CREATE FUNCTION public.gate_identify(p_participant_key text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE r record;
+DECLARE v_session uuid := public.gate_attendee_session(p_participant_key); s jsonb;
 BEGIN
-  IF p_grant_hash IS NOT NULL THEN
+  SELECT jsonb_build_object('id', id, 'code', code, 'current_slide', current_slide, 'is_active', is_active, 'created_at', created_at)
+  INTO s FROM public.sessions WHERE id = v_session;
+  RETURN jsonb_build_object('participant_key', p_participant_key, 'session', s);
+END $$;
+
+-- For guarded paid functions: a verified+introspected attendee while interactive is enabled and
+-- the canonical session is live, or a password-authorized presenter.
+CREATE FUNCTION public.gate_check_access(p_participant_key text, p_presenter_user uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_session uuid;
+BEGIN
+  IF p_participant_key IS NOT NULL THEN
     BEGIN
-      SELECT * INTO r FROM public.gate_resolve(p_grant_hash);
-      RETURN jsonb_build_object('kind', 'attendee', 'participant_key', r.o_participant_key, 'session_id', r.o_session_id);
+      v_session := public.gate_attendee_session(p_participant_key);
+      RETURN jsonb_build_object('kind', 'attendee', 'participant_key', p_participant_key, 'session_id', v_session);
     EXCEPTION WHEN SQLSTATE 'P0001' THEN
-      NULL; -- fall through to presenter check
+      RETURN NULL; -- attendees never fall through to presenter checks
     END;
   END IF;
   IF p_presenter_user IS NOT NULL AND EXISTS (
@@ -189,103 +138,97 @@ BEGIN
   RETURN true;
 END $$;
 
-CREATE FUNCTION public.gate_submit_poll_response(p_grant_hash text, p_poll_id uuid, p_value jsonb)
+CREATE FUNCTION public.gate_submit_poll_response(p_participant_key text, p_poll_id uuid, p_value jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE g record; p public.polls%ROWTYPE; r jsonb;
+DECLARE v_session uuid := public.gate_attendee_session(p_participant_key); p public.polls%ROWTYPE; r jsonb;
 BEGIN
-  SELECT * INTO g FROM public.gate_resolve(p_grant_hash);
   SELECT * INTO p FROM public.polls WHERE id = p_poll_id;
   IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:poll_not_found'; END IF;
-  IF p.session_id <> g.o_session_id THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:wrong_session'; END IF;
+  IF p.session_id <> v_session THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:wrong_session'; END IF;
   IF p.is_open IS FALSE THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:poll_closed'; END IF;
   IF NOT public.gate_valid_value(p_value, p.poll_type, coalesce(p.poll_config, '{}'::jsonb)) THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:invalid_value';
   END IF;
   INSERT INTO public.responses (poll_id, participant_id, value)
-  VALUES (p.id, g.o_participant_key, p_value)
+  VALUES (p.id, p_participant_key, p_value)
   ON CONFLICT (poll_id, participant_id) DO UPDATE SET value = EXCLUDED.value
   RETURNING to_jsonb(responses.*) INTO r;
   RETURN r;
 END $$;
 
-CREATE FUNCTION public.gate_my_responses(p_grant_hash text, p_poll_id uuid)
+CREATE FUNCTION public.gate_my_responses(p_participant_key text, p_poll_id uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE g record; v_session uuid;
+DECLARE v_session uuid := public.gate_attendee_session(p_participant_key); v_poll_session uuid;
 BEGIN
-  SELECT * INTO g FROM public.gate_resolve(p_grant_hash);
-  SELECT session_id INTO v_session FROM public.polls WHERE id = p_poll_id;
-  IF v_session IS NULL OR v_session <> g.o_session_id THEN
+  SELECT session_id INTO v_poll_session FROM public.polls WHERE id = p_poll_id;
+  IF v_poll_session IS NULL OR v_poll_session <> v_session THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:wrong_session';
   END IF;
   RETURN coalesce((SELECT jsonb_agg(to_jsonb(r.*)) FROM public.responses r
-                   WHERE r.poll_id = p_poll_id AND r.participant_id = g.o_participant_key), '[]'::jsonb);
+                   WHERE r.poll_id = p_poll_id AND r.participant_id = p_participant_key), '[]'::jsonb);
 END $$;
 
 -- Positions follow the deck: 1..999 writer slots, 1000..9999 lottery pool, >=10000 discarded.
-CREATE FUNCTION public.gate_story_volunteer(p_grant_hash text, p_name text, p_mode text)
+CREATE FUNCTION public.gate_story_volunteer(p_participant_key text, p_name text, p_mode text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE g record; v_name text := btrim(p_name); v_max integer; v_n integer; v_top integer; v_pos integer; r jsonb;
+DECLARE v_session uuid := public.gate_attendee_session(p_participant_key);
+        v_name text := btrim(p_name); v_max integer; v_n integer; v_top integer; r jsonb;
 BEGIN
-  SELECT * INTO g FROM public.gate_resolve(p_grant_hash);
   IF v_name IS NULL OR length(v_name) NOT BETWEEN 1 AND 40 THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:invalid_name';
   END IF;
   IF p_mode IS NULL OR p_mode NOT IN ('slot', 'lottery') THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:malformed';
   END IF;
-  PERFORM pg_advisory_xact_lock(hashtextextended('story:' || g.o_session_id::text, 0));
+  PERFORM pg_advisory_xact_lock(hashtextextended('story:' || v_session::text, 0));
 
   SELECT to_jsonb(v.*) INTO r FROM public.story_volunteers v
-  WHERE v.session_id = g.o_session_id AND v.participant_id = g.o_participant_key;
+  WHERE v.session_id = v_session AND v.participant_id = p_participant_key;
   IF r IS NOT NULL THEN RETURN r; END IF; -- one entry per lead per session
 
   IF p_mode = 'slot' THEN
-    SELECT max_volunteers INTO v_max FROM public.story_game_state WHERE session_id = g.o_session_id;
+    SELECT max_volunteers INTO v_max FROM public.story_game_state WHERE session_id = v_session;
     v_max := coalesce(v_max, 3);
     SELECT count(*), coalesce(max(position), 0) INTO v_n, v_top
-    FROM public.story_volunteers WHERE session_id = g.o_session_id AND position < 1000;
-    IF v_n >= v_max OR v_top + 1 >= 1000 THEN
-      RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:full';
-    END IF;
-    v_pos := v_top + 1;
+    FROM public.story_volunteers WHERE session_id = v_session AND position < 1000;
+    IF v_n >= v_max OR v_top + 1 >= 1000 THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:full'; END IF;
   ELSE
     SELECT coalesce(max(position), 1000) INTO v_top
-    FROM public.story_volunteers WHERE session_id = g.o_session_id AND position >= 1000 AND position < 10000;
+    FROM public.story_volunteers WHERE session_id = v_session AND position >= 1000 AND position < 10000;
     IF v_top + 1 >= 10000 THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:full'; END IF;
-    v_pos := v_top + 1;
   END IF;
 
   INSERT INTO public.story_volunteers (session_id, participant_id, participant_name, position)
-  VALUES (g.o_session_id, g.o_participant_key, v_name, v_pos)
+  VALUES (v_session, p_participant_key, v_name, v_top + 1)
   RETURNING to_jsonb(story_volunteers.*) INTO r;
   RETURN r;
 END $$;
 
-CREATE FUNCTION public.gate_story_word(p_grant_hash text, p_word text)
+CREATE FUNCTION public.gate_story_word(p_participant_key text, p_word text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE g record; gs public.story_game_state%ROWTYPE; v_word text := btrim(p_word); v_pos integer; v_n integer; r jsonb;
+DECLARE v_session uuid := public.gate_attendee_session(p_participant_key);
+        gs public.story_game_state%ROWTYPE; v_word text := btrim(p_word); v_pos integer; v_n integer; r jsonb;
 BEGIN
-  SELECT * INTO g FROM public.gate_resolve(p_grant_hash);
   IF v_word IS NULL OR length(v_word) NOT BETWEEN 1 AND 40 THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:invalid_word';
   END IF;
-  PERFORM pg_advisory_xact_lock(hashtextextended('story:' || g.o_session_id::text, 0));
-  SELECT * INTO gs FROM public.story_game_state WHERE session_id = g.o_session_id;
+  PERFORM pg_advisory_xact_lock(hashtextextended('story:' || v_session::text, 0));
+  SELECT * INTO gs FROM public.story_game_state WHERE session_id = v_session;
   IF NOT FOUND OR NOT EXISTS (
     SELECT 1 FROM public.story_volunteers v
-    WHERE v.session_id = g.o_session_id AND v.participant_id = g.o_participant_key
+    WHERE v.session_id = v_session AND v.participant_id = p_participant_key
       AND v.position < 1000 AND v.position = coalesce(gs.current_writer_position, 1)
   ) THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:not_your_turn';
   END IF;
-  SELECT coalesce(max(position), 0) + 1 INTO v_pos FROM public.story_words WHERE session_id = g.o_session_id;
+  SELECT coalesce(max(position), 0) + 1 INTO v_pos FROM public.story_words WHERE session_id = v_session;
   INSERT INTO public.story_words (session_id, word, added_by, position)
-  VALUES (g.o_session_id, v_word, g.o_participant_key, v_pos)
+  VALUES (v_session, v_word, p_participant_key, v_pos)
   RETURNING to_jsonb(story_words.*) INTO r;
-  SELECT count(*) INTO v_n FROM public.story_volunteers WHERE session_id = g.o_session_id AND position < 1000;
+  SELECT count(*) INTO v_n FROM public.story_volunteers WHERE session_id = v_session AND position < 1000;
   UPDATE public.story_game_state
   SET current_writer_position = (coalesce(current_writer_position, 1) % greatest(v_n, 1)) + 1, updated_at = now()
-  WHERE session_id = g.o_session_id;
+  WHERE session_id = v_session;
   RETURN r;
 END $$;
 
@@ -300,6 +243,7 @@ BEGIN
   RETURN v_exp;
 END $$;
 
+-- Creates a session for the configured event and makes it the canonical one attendees use.
 CREATE FUNCTION public.gate_create_presenter_session(p_user uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
@@ -310,7 +254,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.presenter_authorizations a WHERE a.user_id = p_user AND a.expires_at > now()) THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:presenter_required';
   END IF;
-  SELECT * INTO cfg FROM public.gate_config WHERE id = 1;
+  SELECT * INTO cfg FROM public.gate_config WHERE id = 1 FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:not_configured'; END IF;
   FOR attempt IN 1..10 LOOP
     v_bytes := decode(md5(gen_random_uuid()::text), 'hex');
@@ -321,8 +265,9 @@ BEGIN
     BEGIN
       INSERT INTO public.sessions (code, current_slide, presenter_id)
       VALUES (v_code, 'P1', p_user) RETURNING * INTO s;
-      INSERT INTO public.presenter_sessions (session_id, presenter_user_id, presentation, workshop)
-      VALUES (s.id, p_user, cfg.presentation, cfg.workshop);
+      INSERT INTO public.presenter_sessions (session_id, presenter_user_id, presentation_id, workshop_id)
+      VALUES (s.id, p_user, cfg.presentation_id, cfg.workshop_id);
+      UPDATE public.gate_config SET canonical_session_id = s.id, updated_at = now() WHERE id = 1;
       RETURN to_jsonb(s);
     EXCEPTION WHEN unique_violation THEN
       NULL; -- code collision, try another
@@ -331,18 +276,8 @@ BEGIN
   RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:unavailable';
 END $$;
 
--- Operator tool (service role only): revoke every grant for one MainSite lead.
-CREATE FUNCTION public.gate_revoke_lead(p_lead_ref text)
-RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE n integer;
-BEGIN
-  UPDATE public.access_grants SET revoked_at = now() WHERE lead_ref = p_lead_ref AND revoked_at IS NULL;
-  GET DIAGNOSTICS n = ROW_COUNT;
-  RETURN n;
-END $$;
-
-REVOKE ALL ON FUNCTION public.gate_redeem(text, text, text, text, text, text, text, timestamptz) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.gate_resolve(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.gate_attendee_session(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.gate_identify(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_check_access(text, uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_valid_value(jsonb, public.poll_type, jsonb) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_submit_poll_response(text, uuid, jsonb) FROM PUBLIC, anon, authenticated;
@@ -351,10 +286,9 @@ REVOKE ALL ON FUNCTION public.gate_story_volunteer(text, text, text) FROM PUBLIC
 REVOKE ALL ON FUNCTION public.gate_story_word(text, text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_authorize_presenter(uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_create_presenter_session(uuid) FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.gate_revoke_lead(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.is_proven_presenter(uuid) FROM PUBLIC, anon;
 
-GRANT EXECUTE ON FUNCTION public.gate_redeem(text, text, text, text, text, text, text, timestamptz) TO service_role;
+GRANT EXECUTE ON FUNCTION public.gate_identify(text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_check_access(text, uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_submit_poll_response(text, uuid, jsonb) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_my_responses(text, uuid) TO service_role;
@@ -362,5 +296,4 @@ GRANT EXECUTE ON FUNCTION public.gate_story_volunteer(text, text, text) TO servi
 GRANT EXECUTE ON FUNCTION public.gate_story_word(text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_authorize_presenter(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_create_presenter_session(uuid) TO service_role;
-GRANT EXECUTE ON FUNCTION public.gate_revoke_lead(text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.is_proven_presenter(uuid) TO authenticated, service_role;

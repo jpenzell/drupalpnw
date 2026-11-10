@@ -1,8 +1,9 @@
 // Generates guarded copies of the 12 paid legacy functions into gate/functions/<name>/index.ts
 // (outside the deploy path). Run: bun gate/scripts/generate-guarded.ts  [--check]
 // The transform is mechanical and verified by gate/test/guarded.test.ts:
-//   1. import the guard; 2. CORS origin "*" -> the allowed PNW2 origin and allow x-pnw2-grant;
-//   3. right after the OPTIONS preflight, refuse requests without a live grant or presenter proof.
+//   1. import the guard; 2. CORS origin "*" -> the allowed PNW2 origin;
+//   3. right after the OPTIONS preflight, refuse requests without a verified+introspected attendee
+//      token (interactive enabled) or a password-authorized presenter.
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -38,9 +39,7 @@ export function transform(name: string, source: string): string {
   if ((text.match(originRe) ?? []).length !== 1) throw new Error(`${name}: expected exactly one wildcard CORS origin`);
   text = text.replace(originRe, `$1Access-Control-Allow-Origin$1: PNW2_CORS_ORIGIN`);
 
-  const headersRe = /(["'])Access-Control-Allow-Headers\1(\s*:\s*)(["'])([^"']*)\3/;
-  if (!headersRe.test(text)) throw new Error(`${name}: no Allow-Headers`);
-  text = text.replace(headersRe, (_m, q1, sep, q2, list) => `${q1}Access-Control-Allow-Headers${q1}${sep}${q2}${list}, x-pnw2-grant${q2}`);
+  // Attendee tokens travel as Authorization: Bearer (already an allowed header) — no header change.
 
   const lines = text.split("\n");
   const opt = lines.findIndex((l) => /req\.method\s*===\s*["']OPTIONS["']/.test(l));

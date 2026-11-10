@@ -1,14 +1,21 @@
-// Grant lifecycle for attendees, independent of React and the backend client (testable).
-// A grant is held in memory only and is never used past its own expiry; renewal happens only
-// by asking the verified MainSite parent for a fresh token and redeeming it again.
+// Attendee access lifecycle, independent of React and the backend client (testable).
+// The MainSite token is held in memory only and never used at or past its own expiry.
+// Renewal = a fresh token through the verified parent handshake, re-confirmed by the server.
 import type { GateMode } from "./config";
 
-export interface Grant {
-  grant: string;
+export interface SessionRow {
+  id: string;
+  code: string;
+  current_slide: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface Access {
+  token: string;
+  expiresAt: number; // ms, as verified and returned by the server
   participantKey: string;
-  sessionId: string;
-  sessionCode: string;
-  expiresAt: number; // ms
+  session: SessionRow; // canonical event session, chosen server-side
 }
 
 export type Invoker = (
@@ -39,71 +46,72 @@ export function createGateCore(deps: GateCoreDeps) {
   const setTimer = deps.setTimer ?? ((fn, ms) => setTimeout(fn, ms));
   const clearTimer = deps.clearTimer ?? ((id) => clearTimeout(id as ReturnType<typeof setTimeout>));
   const renewBefore = deps.renewBeforeMs ?? 60_000;
-  let current: Grant | null = null;
-  let boundCode: string | null = null;
+  let current: Access | null = null;
+  let active = false;
   let renewTimer: unknown = null;
   let unsubscribe: (() => void) | null = null;
-  const listeners = new Set<(g: Grant | null) => void>();
+  const listeners = new Set<(a: Access | null) => void>();
+  const emit = () => listeners.forEach((l) => l(access()));
 
-  const emit = () => listeners.forEach((l) => l(grant()));
-
-  function grant(): Grant | null {
+  function access(): Access | null {
     return current && current.expiresAt > now() ? current : null;
   }
 
-  async function redeem(token: string, code: string): Promise<Grant | null> {
-    const { data, error } = await deps.invoke("redeem-access", { body: { token, session_code: code } });
-    if (error || !data?.grant || typeof data.expires_at !== "string") return null;
+  async function identify(token: string): Promise<Access | null> {
+    const { data, error } = await deps.invoke("submit-interaction", {
+      body: { action: "identify" },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const d = data?.data;
+    if (error || !data?.ok || !d?.participant_key || !d?.session?.id || typeof data.expires_at !== "string") return null;
     const expiresAt = Date.parse(data.expires_at);
     if (!Number.isFinite(expiresAt) || expiresAt <= now()) return null;
-    return { grant: data.grant, participantKey: data.participant_key, sessionId: data.session_id, sessionCode: code, expiresAt };
+    return { token, expiresAt, participantKey: d.participant_key, session: d.session };
   }
 
-  function schedule(g: Grant) {
+  function schedule(a: Access) {
     if (renewTimer) clearTimer(renewTimer);
-    const wait = Math.max(5_000, g.expiresAt - now() - renewBefore);
-    renewTimer = setTimer(() => deps.tokens?.request(), wait);
+    renewTimer = setTimer(() => deps.tokens?.request(), Math.max(5_000, a.expiresAt - now() - renewBefore));
   }
 
   function ensureSubscribed() {
     if (unsubscribe || !deps.tokens) return;
     unsubscribe = deps.tokens.onToken(async (token) => {
-      if (!boundCode) return;
-      const next = await redeem(token, boundCode);
+      if (!active) return;
+      const next = await identify(token);
       if (next) {
-        current = next; // replaces, never extends: expiry comes from the new token
+        current = next; // replaced, never extended: expiry comes from the new token
         schedule(next);
         emit();
       }
     });
   }
 
-  async function connect(sessionCode: string): Promise<Grant | null> {
-    if (deps.mode === "off" || !deps.tokens) return null;
-    boundCode = sessionCode.toUpperCase();
-    ensureSubscribed();
-    const existing = grant();
-    if (existing && existing.sessionCode === boundCode) return existing;
-    current = null;
-    const waitMs = deps.tokenWaitMs ?? 8_000;
-    const got = await new Promise<Grant | null>((resolve) => {
-      let done = false;
-      const off = listen((g) => {
-        if (!done && g) { done = true; off(); clearTimer(t); resolve(g); }
-      });
-      const t = setTimer(() => { if (!done) { done = true; off(); resolve(null); } }, waitMs);
-      deps.tokens!.request();
-    });
-    return got;
-  }
-
-  function listen(cb: (g: Grant | null) => void): () => void {
+  function listen(cb: (a: Access | null) => void): () => void {
     listeners.add(cb);
     return () => listeners.delete(cb);
   }
 
+  /** Framed attendees only: handshake → server verification → canonical session. */
+  async function connect(): Promise<Access | null> {
+    if (deps.mode === "off" || !deps.tokens) return null;
+    active = true;
+    ensureSubscribed();
+    const existing = access();
+    if (existing) return existing;
+    current = null;
+    return new Promise<Access | null>((resolve) => {
+      let done = false;
+      const off = listen((a) => {
+        if (!done && a) { done = true; off(); clearTimer(t); resolve(a); }
+      });
+      const t = setTimer(() => { if (!done) { done = true; off(); resolve(null); } }, deps.tokenWaitMs ?? 8_000);
+      deps.tokens!.request();
+    });
+  }
+
   function disconnect() {
-    boundCode = null;
+    active = false;
     current = null;
     if (renewTimer) clearTimer(renewTimer);
     renewTimer = null;
@@ -113,33 +121,34 @@ export function createGateCore(deps: GateCoreDeps) {
   }
 
   async function submit(action: string, payload: Record<string, unknown>): Promise<SubmitResult> {
-    const g = grant();
-    if (!g) return { ok: false, error: "access_required" };
+    const a = access();
+    if (!a) return { ok: false, error: "access_required" };
     const { data, error } = await deps.invoke("submit-interaction", {
       body: { action, ...payload },
-      headers: { "x-pnw2-grant": g.grant },
+      headers: { Authorization: `Bearer ${a.token}` },
     });
     if (error || !data?.ok) return { ok: false, error: "failed" };
     return { ok: true, data: data.data };
   }
 
-  /** Off: always the existing direct write. Grant held: gated. Enforce without grant: blocked. */
-  async function route<T>(gated: (g: Grant) => Promise<T>, direct: () => Promise<T>, blocked: T): Promise<T> {
+  /** Off: always the existing direct write. Access held: gated. Enforce without access: blocked. */
+  async function route<T>(gated: (a: Access) => Promise<T>, direct: () => Promise<T>, blocked: T): Promise<T> {
     if (deps.mode === "off") return direct();
-    const g = grant();
-    if (g) return gated(g);
+    const a = access();
+    if (a) return gated(a);
     if (deps.mode === "enforce") return blocked;
     return direct();
   }
 
-  function withGrantHeader<O extends object>(opts: O | undefined): O | undefined {
-    const g = deps.mode === "off" ? null : grant();
-    if (!g) return opts;
+  /** For guarded paid functions: send the attendee token as Authorization: Bearer when held. */
+  function withAccessHeader<O extends object>(opts: O | undefined): O | undefined {
+    const a = deps.mode === "off" ? null : access();
+    if (!a) return opts;
     const prev = (opts as { headers?: Record<string, string> } | undefined)?.headers ?? {};
-    return { ...(opts ?? ({} as O)), headers: { ...prev, "x-pnw2-grant": g.grant } } as O;
+    return { ...(opts ?? ({} as O)), headers: { ...prev, Authorization: `Bearer ${a.token}` } } as O;
   }
 
-  return { grant, connect, disconnect, submit, route, withGrantHeader, listen };
+  return { access, connect, disconnect, submit, route, withAccessHeader, listen };
 }
 
 export type GateCore = ReturnType<typeof createGateCore>;

@@ -1,97 +1,125 @@
-# PNW2 interactive gate: staged and inactive
+# PNW2 interactive gate: staged and inactive (final MainSite contract)
 
 Nothing in this folder is deployed, migrated or published.
 
+This folder targets the final MainSite contract from candidate `9f83abd40800c045c0b9cda2f03a23a3386fad38` (the contact-review document, "External-deck protocol"), with one correction: the issuer and parent origin are **`https://www.joshpenzell.com`**. The MainSite document assumed the apex domain; that is being corrected on their side.
+
 - **Server code:** `gate/functions/*` sits outside `supabase/functions/`, so nothing there deploys.
-- **SQL:** `gate/migrations/*` and `gate/data/*` have not been applied. Database changes take effect immediately on the shared live backend, which is why they stay here until the right stage.
-- **Page code:** the code in `src/lib/gate/*` is compiled into the app but stays inactive while `GATE_MODE = "off"`. With the flag off, every attendee write and every paid-function call runs the exact code it ran before; it is only wrapped in `gate.route(...)` or `invokeFunction(...)`.
+- **SQL:** `gate/migrations/*` and `gate/data/*` have not been applied. Database changes take effect immediately on the shared live backend, which is why they wait for their stage.
+- **Page code:** the code in `src/lib/gate/*` is compiled into the app but inactive while `GATE_MODE = "off"`. With the flag off, every attendee write and every paid-function call runs exactly the code it ran before; it is only wrapped in `gate.route(...)` or `invokeFunction(...)`.
+
+## Contract as implemented
+
+### Token (`_shared/accessToken.ts`)
+- **Algorithm and key:** EdDSA/Ed25519 only. The `kid` must be in the JWKS. Key-carrying headers (`jku`, `jwk`, `x5u`, `x5c`, `crit`) are refused. `typ` must be `JWT` or absent.
+- **Claims:** all must match exactly.
+
+  | Claim | Required value |
+  |---|---|
+  | `iss` | `https://www.joshpenzell.com` |
+  | `aud` | `pnw2:e10466e1-025e-4530-8f10-a62efb7a9ea8` (a string, not an array) |
+  | `presentation_id`, `workshop_id` | Integers `16460` and `9503` |
+  | `scope` | Exactly the set `["slides:interact","session:qa"]` |
+  | `policy_version` | `1` |
+  | `sub` / `jti` | Both the same UUID |
+
+- **Timestamps:** `iat`, `nbf` and `exp` must be positive safe integers, in order, with a lifetime of 300 seconds or less. Up to 30 seconds of clock skew is tolerated, only for `iat`/`nbf` being ahead. `exp` gets no grace.
+- **Personal data:** a token containing personal-data claims is refused.
+- **Reuse:** `jti` is the reusable grant id. A token may be used for many actions until it expires; there is no single-use replay table.
+- **Identity:** `participant_key = lead_ + sha256(issuer|sub|16460|9503)[0..32]`, derived on the server. The client never chooses it.
+
+### Policy service (`_shared/mainsite.ts`, `_shared/runtime.ts`)
+- **Fixed endpoints:** `GET https://www.joshpenzell.com/api/drupal-access/jwks` and `POST https://www.joshpenzell.com/api/drupal-access/introspect`. Both derive from the pinned issuer, never from environment settings, tokens or requests. The call uses `Authorization: Bearer <token>`, `redirect: "error"`, a 3-second timeout and no caching.
+- **Every protected action:** local verification, then live introspection. A positive introspection result is never cached. Only the public keys are cached, for 5 minutes.
+- **What passes:** only `200 {active:true, sub:<same>, scope ∋ "slides:interact", policy_version:1}`.
+- **What denies:**
+  - `{active:false}` or a 401 → `access_revoked` (401).
+  - 404 (MainSite gate off), 429, 5xx, non-JSON, timeout or network failure → `policy_unavailable` (503).
+  - A different `sub`, scope or policy version → denied.
+- **Secrets:** none to share.
+
+### Embedded handshake (`src/lib/gate/parentHandshake.ts`)
+- **Request:** the child posts `{type:"pnw:access-request", nonce}` to `https://www.joshpenzell.com` only. The nonce is 32 random bytes, base64url-encoded (43 characters, within the 128 limit). Up to 4 requests can be outstanding, each for 30 seconds.
+- **Response accepted only when:**
+  - `origin` is exact;
+  - `source === window.parent`;
+  - `type === "pnw:access-response"`;
+  - the nonce is outstanding (each nonce is used once);
+  - the token is JWT-shaped and 4096 characters or fewer.
+- **Storage:** the token is kept in memory only. A test checks that the gate code never touches storage, cookies, history or analytics.
+- **Renewal:** a fresh handshake 60 seconds before the server-verified expiry. If no reply arrives, access lapses; nothing extends it.
+
+### Session binding (no `session_code` from MainSite)
+- **Canonical session:** the event's canonical session is `gate_config.canonical_session_id`. It is set when the presenter creates a session through the password-checked path, which records presentation 16460 / workshop 9503.
+- **Server-chosen:** every attendee action resolves that session on the server. Codes, session ids and identity fields sent by the caller are refused (`identity_not_allowed`). Polls in any other session return `wrong_session`.
+- **Joining inside MainSite:** the deck auto-joins the canonical session after the `identify` action. Any `?join=` code is ignored for binding.
+
+### Protected surfaces once enforced
+- **Attendee writes:** only through `submit-interaction`, with these actions: `identify`, `poll_response`, `my_responses`, `story_volunteer`, `story_word`.
+- **Direct database writes:** `02_enforce.sql` closes every direct anonymous or self-identified write: responses, sessions, story volunteers, words and topics, big-idea submissions, and the legacy `connect_submissions`.
+- **Paid functions:** each of the 12 refuses any request that lacks either a verified and introspected attendee token (while interactive services are enabled) or a password-authorized presenter login. The check runs before any provider call.
+- **Attendee tokens:** an EdDSA bearer is always handled as an attendee token. It never falls through to presenter checks, and it is refused outright by `create-presenter-session`.
+- **Notification:** `send-connect-notification` is replaced by a 410 stub that sends no email. MainSite is the canonical lead capture.
+- **Presenter:** the existing `PRESENTATION_PASSWORD`, compared the same way `verify-password` does, plus a verified login, recorded for 12 hours. Stage operations work through RLS `is_proven_presenter`. A bare anonymous sign-in is never presenter proof.
+- **Free, not gated:** viewing the deck; reading sessions, polls and responses; captions and `translate-caption`; the MainSite recording, transcript and TXT.
 
 ## Published vs candidate
+The live bundle `index-BJwF2DXK.js` contains markers from commit `8ee343f`. This is evidence, not attestation: the hosting service exposes no commit id, and a byte-identical rebuild was not done.
 
-**Evidence, not attestation.** The live bundle `index-BJwF2DXK.js` on `https://drupalpnw.lovable.app` contains the sponsor-slide layout class strings introduced in commit `8ee343f` ("Added QR to first slide"). It also contains every earlier feature marker checked. This shows the live build is at or after `8ee343f`. It does not prove that `8ee343f` is the exact published commit, because the hosting service exposes no commit id. A byte-level comparison would need a build of `8ee343f` with identical tooling, and that was not done.
+`git diff --stat 8ee343f -- src` shows 30 files:
+- `src/lib/gate/**` — new.
+- `SessionContext` and `PollContext` — branches that only run when the gate flag is on.
+- 3 story/number screens — wrapped in `gate.route`.
+- 22 call sites in 16 files — `invokeFunction`.
+- `Connect.tsx` — gate-on branch.
+- `previewAuthStorage.ts` — platform-generated; not from the gate work.
 
-**Candidate vs `8ee343f`:** `git diff --stat 8ee343f` shows 75 files.
+Outside `src`: `gate/**`, `AGENTS.md`, `roadmap.md` and `.lovable/plan*`. No slide content, running order or presenter controls changed.
 
-| Area | What changed |
-|---|---|
-| `gate/**` | New, inert. |
-| `src/lib/gate/**` | New gate modules and tests. |
-| `src/contexts/SessionContext.tsx`, `src/contexts/PollContext.tsx` | Gate branches that only run when `GATE_MODE !== "off"`. |
-| `OneWordStoryScreen`, `ElephantQuestionScreen`, `TrueRandomScreen` | Attendee writes wrapped in `gate.route`. With the flag off they run the original code. |
-| 22 call sites in 16 files | `supabase.functions.invoke` → `invokeFunction` for the 12 paid functions. With the flag off this is identical. |
-| `src/pages/Connect.tsx` | Gate-on branch: no legacy row, no email; opens MainSite capture instead. |
-| `src/integrations/supabase/previewAuthStorage.ts` | Platform-generated preview login sharing; not from the gate work. |
-| `AGENTS.md`, `roadmap.md`, `.lovable/plan*` | Notes and plans. |
+## Prerequisites still open (concrete)
+1. **MainSite issuer:** `DRUPAL_CONTACT_ORIGIN`/issuer set to exactly `https://www.joshpenzell.com`. The document's apex assumption must be corrected; until then every token fails `wrong_issuer` (fail closed).
+2. **Apex visitors:** `https://joshpenzell.com/` currently serves 200 itself; it does not redirect to www. This was checked read-only today. A visitor on the apex domain has parent origin `https://joshpenzell.com`, so the deck's message to `www` is dropped and that visitor cannot interact. MainSite must redirect apex to www, or make every capture link use www.
+3. **MainSite parent iframe:** `src` set to `https://drupalpnw.lovable.app/`, or any path on that origin; no code is needed. The deck currently sends no `X-Frame-Options` or `frame-ancestors`, so it can be framed. This was checked read-only today.
+4. **MainSite gate, keys and capacity:** the MainSite gate must be ON and its JWKS must serve the Ed25519 key before Stage 3; a disabled introspect returns 404, which the deck denies. The introspect rate budget must cover one call per attendee action, plus one per token renewal (every 4 minutes per attendee), across the room.
+5. **Outbound access:** the edge runtime must be able to reach `www.joshpenzell.com`. This is checked at Stage 3 with one synthetic token.
+6. **Presenter session:** after Stage 2, before the talk, the presenter starts the live session once through the password prompt, which makes it canonical.
+7. **Coordinated window and approvals:** Stage 4 (optional retiring of old sessions) needs explicit approval.
 
-No slide content, running order or presenter controls changed.
-
-## Required inputs still missing from MainSite (the final contract)
-1. JWKS URL (https), `kid`s, and whether the algorithm is EdDSA or ES256. Goes into secret `MAINSITE_JWKS_URL`.
-2. The exact `postMessage` names for the request, reply and renewal, and the reply's field name. Placeholder today: `HANDSHAKE_MESSAGE_TYPE` in `src/lib/gate/config.ts`.
-3. The claim names for presentation and workshop. Assumed `presentation` and `workshop`, as string or integer. Also: is `session_code` carried in the token? If not, the page sends the code the attendee joined with, and the server binds the grant to that one session.
-4. Exact parent origin, assumed `https://www.joshpenzell.com`, and the iframe `src` MainSite will use, with or without `?join=CODE`.
-5. A synthetic test key and token procedure for Stage 3.
-
-Already present: the `PRESENTATION_PASSWORD` secret. Optional: `PNW2_ALLOWED_ORIGINS` (default `https://drupalpnw.lovable.app`).
-
-## What is protected once enforced
-
-**Attendee writes**
-- Attendees can only write through `submit-interaction`. It supports four actions: `poll_response`, `my_responses`, `story_volunteer` and `story_word`.
-- Each action resolves the grant in the database. The grant must be unexpired and unrevoked, and its bound session must be active and belong to presentation 16460 / workshop 9503.
-- The answer identity is `lead_<sha256>`, derived on the server from the MainSite lead.
-- Requests carrying `participant_id`, `session_id`, `added_by` or similar fields are refused.
-- `story_topics`, `story_topic_votes` and `big_idea_submissions` have no callers in the deck, so attendee access to them is closed with no adapter.
-
-**Grants**
-- A grant expires exactly when its five-minute token expires.
-- The page asks the verified parent for a fresh token 60 seconds before expiry. If no fresh token arrives, access simply lapses.
-- Each `jti` is stored permanently, so a replayed token is always refused.
-
-**Sessions and presenter**
-- Sessions can only be created by `create-presenter-session`. It checks the existing presentation password (same comparison as `verify-password`) plus a verified login, then records authorization on the server for 12 hours.
-- An anonymous sign-in, or a session id sent by the caller, is never treated as presenter proof.
-- Stage operations (manual entries, voluntold, lottery commit, slide changes, polls, clearing) still work through RLS using `is_proven_presenter`.
-
-**Paid functions**
-- Each of the 12 paid functions refuses a request unless it carries a live grant or comes from an authorized presenter. The check runs right after the preflight, before any provider call. CORS is limited to the allowed origin.
-- `send-connect-notification` is replaced by a 410 stub that sends no email.
-- The legacy `connect_submissions` insert is closed.
-
-**Free, not gated**
-- Viewing the deck.
-- Reading sessions, polls and responses.
-- Captions and `translate-caption`.
-- The MainSite recording, transcript and TXT.
-
-## Behavior notes to approve
-- **Story writer turn.** In the gated path, `gate_story_word` advances the writer turn on the server after verifying it is the caller's turn. Today the attendee's own turn-advance call is rejected by RLS.
-- **Reconnect by name.** This becomes a no-op when the gate is on, because the identity is already stable per lead.
-- **Presenter prompt.** When the gate is on, the presenter enters the presentation password (a browser prompt) the first time they start a live session.
-- **Old sessions.** `data/stage4_retire_unproven_sessions.sql` closes old non-password sessions such as test codes. It is optional and needs explicit approval.
+No new secret is needed on this side. `PRESENTATION_PASSWORD` already exists, and `PNW2_ALLOWED_ORIGINS` is optional (default `https://drupalpnw.lovable.app`).
 
 ## Staged activation
-"Live now" means the change takes effect immediately on the shared live backend. Page changes go live only on Publish.
+"Live now" means the change takes effect immediately on the shared backend. Page changes go live only on Publish.
 
 | Stage | Steps | When live |
 |---|---|---|
-| 1. Dormant backend | Apply `migrations/01_dormant_gate.sql`, which is additive: new tables and service-role-only functions, with no policy or grant changes. Run `data/stage1_config.sql` (`redeem_enabled=false`). Copy `_shared/{accessToken,gateHttp,interactiveGuard,runtime,guardRuntime}.ts` and deploy `redeem-access`, `submit-interaction` and `create-presenter-session`. All three answer `not_configured` until Stage 3. | Live now. Harmless: today's policies are untouched (the RLS test proves the policy snapshot equals baseline). |
-| 2. Page in dual mode | Set `GATE_MODE = "dual"`, set the final handshake names, publish. Inside the MainSite frame, attendees use grants when they have one; everywhere else the old path is used. Presenter session creation moves to the password path. | On publish. |
-| 3. MainSite synthetic check | Run `data/stage3_enable_redeem.sql`, then one synthetic token end to end. No real leads. | Live now. |
-| 4. Enforce | Deploy the 12 guarded copies and the retired notification stub. Apply `migrations/02_enforce.sql`. Then set `GATE_MODE = "enforce"` and publish: standalone `?join=` visits and `/connect` redirect to MainSite capture. Order: page publish (enforce) right after the SQL. | SQL and functions live now; page on publish. |
-| Rollback | Run `data/rollback_disable.sql`, apply `migrations/99_rollback_enforce.sql` (restores the exact baseline policies, as tested), redeploy the original 12 functions and `send-connect-notification`, and set `GATE_MODE` back. | Live now, except the page. |
+| 1. Dormant | Apply `migrations/01_dormant_gate.sql` (additive; no policy or grant changes). Run `data/stage1_config.sql` (maintenance). Copy `_shared/{accessToken,mainsite,attendee,gateHttp,interactiveGuard,runtime,guardRuntime}.ts` and deploy `submit-interaction` and `create-presenter-session`. Attendee actions answer `maintenance`. | Live now. Harmless: today's policies are untouched (tested). |
+| 2. Page dual | Set `GATE_MODE = "dual"` and publish. In the MainSite frame, attendees use tokens when available; elsewhere the old path. Presenter creation moves to the password path; the presenter creates the canonical session. | On publish. |
+| 3. Synthetic check | Run `data/stage3_enable_interactive.sql`. One synthetic MainSite capture: handshake, identify, one answer, revoke on MainSite, next action denied. No real leads. | Live now. |
+| 4. Enforce | Deploy the 12 guarded copies and the retired notification. Apply `migrations/02_enforce.sql`, then immediately set `GATE_MODE = "enforce"` and publish (standalone `?join=` and `/connect` redirect to `https://www.joshpenzell.com/p/ai-for-all-minds-pnw-drupal-summit-2026-10-17`). | SQL and functions live now; page on publish. |
+| Rollback | Run `data/rollback_maintenance.sql`: attendee actions and attendee paid calls are denied with `maintenance`. Enforced policies stay; no old anonymous write path is reopened; nothing is dropped. MainSite revokes grants as authorized and disables interactive entry; the public recording and transcript stay open. | Live now. |
 
-During the Stage 4 gap between the SQL and the publish, phones on the dual-mode page that hold no grant cannot write. They can still view.
+## Test evidence (synthetic only)
+`bash gate/test/run.sh` starts a throwaway local Postgres 17 on 127.0.0.1:54329. Its schema is reproduced from the live backend: tables, constraints, every policy verbatim, grants and default function grants. MainSite is replaced by in-process synthetic Ed25519 keys and a controllable introspection stand-in. There are no network or live calls.
 
-## Tests (synthetic only)
-`bash gate/test/run.sh` starts a throwaway local Postgres (port 54329, under `/tmp`). Its schema is reproduced read-only from the live backend: tables, constraints, every policy verbatim, grants and default function grants. It runs 55 tests:
+Latest run: **64 pass, 0 fail.**
 
 | Suite | Count | What it covers |
 |---|---|---|
-| Verifier | 7 | Exact `iss`/`aud`/scope; fractional, negative, zero, string, null, huge or misordered timestamps; future `iat`/`nbf`; lifetime over 300s; expiry; `none`/HS256; `kid`/alg pinning; `jku`/`crit`; tampering; personal data; identity derivation. |
-| Handlers + real SQL | 19 | Presenter proof; bare anonymous user refused; grant expiry equals token `exp`; replay after revoke; unbound, mismatched, inactive and foreign-workshop sessions; origin; disabled gate; forged key; identity-field tampering; cross-session; closed poll; payload validation per poll type; expired, revoked and ended-session grants; story slots, cap, lottery and turns; unknown actions; paid guard; browser roles denied on every gate function and table. |
-| RLS | 5 | Dormant equals baseline; every attendee write closed after enforce; proven presenter operations kept; public reads kept; rollback equals baseline exactly. |
-| Guarded copies | 14 | All 12 are present and current with the live source; the guard sits right after the preflight; no wildcard CORS remains; removing the guard restores the original byte for byte; every provider-calling function is classified; the retired notification sends no email. |
-| Page | 10 | Handshake origin and source; grant core (flag off is a pure passthrough, renewal timing, no extension past expiry, dual vs enforce routing, token wait timeout); standalone redirect rules. |
+| Verifier and policy client | 11 | Exact token shape. EdDSA pinned (ES256, HS256, none, RS256 and EC keys refused). `iss` www-exact (apex, trailing slash and http refused). `aud` exact string. Integer event ids (string ids refused). Exact scope set. `policy_version` 1. `sub` must equal `jti` and be a UUID. Every bad timestamp shape; lifetime over 300 s; future `iat`/`nbf`; expiry; reuse within lifetime. Key-header injection, tampering and personal data. Identity stability. Fixed endpoints. Introspection request shape (POST, Bearer, no redirect). Every negative, odd or unavailable reply fails closed. |
+| Handlers and real SQL | 21 | Presenter proof: no login, wrong password and attendee token refused; the newest password session becomes canonical; a bare anonymous owner gets nothing. `session_inactive` before a canonical session exists. Identify binds to the canonical session. Token reuse with one introspection per action. Revocation applies on the very next action. Policy-service or key-fetch outage gives 503 for actions and paid calls. Missing, forged, expired, cross-event and wrong-audience tokens are refused before introspection. Exact origin. Server-derived identity, upsert and read-back. One identity across renewed tokens. Identity and session fields refused. Old, arbitrary or closed polls refused. Payload validation (slider range, multiple-choice options). Story slots, cap, lottery and turns. Unknown actions. Paid guard (attendee, presenter, expired presenter, bare anonymous, publishable key, wrong origin). Maintenance rollback denies all attendee paths, keeps the presenter, and reopens no write. Browser roles denied on every gate function and table. |
+| RLS | 6 | Dormant equals baseline. Enforce closes every direct attendee write. The proven presenter keeps stage operations. Public reads kept. Maintenance keeps the enforced policy snapshot. No staged SQL recreates any old anonymous or self-write policy or drops a table, schema or column. |
+| Guarded copies | 14 | All 12 are present and current with the live source. The guard sits right after the preflight. No wildcard CORS. Removing the guard restores the original byte for byte. Classification is complete. The notification sends no email. |
+| Page | 12 | Exact request message. Origin, source and outstanding-nonce matching, each nonce used once. Nonce shape. No storage, URLs or analytics. Standalone detection. Flag off is a pure passthrough. Identify flow and Bearer header. Renewal at expiry minus 60 s with no extension. Server denial. Dual vs enforce routing. Standalone redirect rules. |
 
-Not exercised: the supabase-js calls inside `runtime.ts` (getClaims, rpc transport, JWKS fetch), and the deployed edge runtime. Stage 3 covers those.
+Also clean:
+- The app type-check.
+- `deno check` of every staged function.
+- `generate-guarded --check` (the copies match today's 12 functions).
+- The existing project tests: 17 pass.
+
+**Not exercised:**
+- The supabase-js transport inside `runtime.ts`: `getClaims`, the real rpc client, real fetches to MainSite.
+- The deployed edge runtime.
+- A real browser frame on MainSite.
+
+Stage 3's single synthetic capture covers these.

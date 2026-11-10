@@ -34,8 +34,7 @@ for (const name of GUARDED_FUNCTIONS) {
       .slice(3)
       .filter((l) => l !== GUARD_IMPORT && !GUARD_LINES.includes(l))
       .join("\n")
-      .replace(/(["'])Access-Control-Allow-Origin\1: PNW2_CORS_ORIGIN/, (_m, q) => `${q}Access-Control-Allow-Origin${q}: ${q}*${q}`)
-      .replace(", x-pnw2-grant", "");
+      .replace(/(["'])Access-Control-Allow-Origin\1: PNW2_CORS_ORIGIN/, (_m, q) => `${q}Access-Control-Allow-Origin${q}: ${q}*${q}`);
     assert.equal(restored, src);
   });
 }

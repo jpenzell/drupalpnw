@@ -1,6 +1,8 @@
 // STAGED — copied into supabase/functions/_shared/ only at activation (gate/README.md).
-// Verifies a MainSite-issued attendee access token (compact JWS) with WebCrypto only, so the
-// same code runs in Deno (edge functions) and Bun (tests) with no dependencies.
+// Verifies a MainSite attendee token exactly per the final contract (MainSite candidate
+// 9f83abd4, src server/drupalContact signer): EdDSA/Ed25519 only, fixed issuer, audience,
+// event ids, scope, policy version, sub === jti (opaque capture UUID), <= 300 s lifetime.
+// WebCrypto only, so it runs unchanged in Deno (edge) and Bun (tests).
 
 export interface PublicJwk extends JsonWebKey {
   kid?: string;
@@ -8,22 +10,21 @@ export interface PublicJwk extends JsonWebKey {
 }
 
 export interface AccessTokenPolicy {
-  issuer: string; // exact string match
-  audience: string; // exact string match (array audiences are rejected)
-  scope: Record<string, string>; // e.g. { presentation: "16460", workshop: "9503" } — all required
-  maxLifetimeSeconds: number; // exp - iat ceiling (300 = five minutes)
-  clockSkewSeconds: number; // tolerance for iat/nbf in the future only; exp gets none
-  allowedAlgs: ReadonlyArray<"EdDSA" | "ES256">;
+  issuer: string; // exact string
+  audience: string; // exact string
+  presentationId: number; // exact integer
+  workshopId: number; // exact integer
+  scope: readonly string[]; // exact set, as MainSite issues it
+  policyVersion: number; // exact integer
+  maxLifetimeSeconds: number; // exp - iat ceiling
+  clockSkewSeconds: number; // tolerance for iat/nbf ahead of our clock only; exp gets none
 }
 
 export interface VerifiedAccess {
-  sub: string;
-  jti: string;
-  exp: number; // seconds since epoch — the grant can never outlive this
+  sub: string; // capture grant UUID (== jti); reusable for the token's lifetime
+  exp: number; // seconds since epoch — nothing derived from this token outlives it
   iat: number;
   kid: string;
-  scope: Record<string, string>;
-  sessionCode?: string;
 }
 
 export type AccessError =
@@ -33,12 +34,14 @@ export type AccessError =
   | "bad_signature"
   | "wrong_issuer"
   | "wrong_audience"
+  | "wrong_event"
   | "wrong_scope"
+  | "wrong_policy"
   | "invalid_timestamps"
   | "not_yet_valid"
   | "expired"
   | "lifetime_too_long"
-  | "missing_claims"
+  | "invalid_subject"
   | "personal_data_in_token";
 
 export class AccessTokenError extends Error {
@@ -47,11 +50,12 @@ export class AccessTokenError extends Error {
   }
 }
 
-// Claims that would mean personal data travelled in the token; MainSite agreed not to send them.
-const FORBIDDEN_CLAIMS = ["email", "name", "given_name", "family_name", "phone_number", "preferred_username"];
+// MainSite agreed to send no PII; reject outright if any appears.
+const FORBIDDEN_CLAIMS = ["email", "name", "given_name", "family_name", "phone_number", "preferred_username", "consent", "consentMarketing", "company", "role"];
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function b64urlToBytes(s: string): Uint8Array<ArrayBuffer> {
-  if (!/^[A-Za-z0-9_-]*$/.test(s)) throw new AccessTokenError("malformed");
+  if (!/^[A-Za-z0-9_-]+$/.test(s)) throw new AccessTokenError("malformed");
   const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
   let bin: string;
   try {
@@ -74,27 +78,17 @@ function parseJson(bytes: Uint8Array): Record<string, unknown> {
   }
 }
 
-async function importKey(jwk: PublicJwk, alg: "EdDSA" | "ES256"): Promise<CryptoKey> {
-  // Only public members are passed to WebCrypto; a JWK carrying "d" (private) is refused.
-  if ("d" in jwk) throw new AccessTokenError("unknown_kid");
-  if (alg === "EdDSA") {
-    if (jwk.kty !== "OKP" || jwk.crv !== "Ed25519" || typeof jwk.x !== "string") throw new AccessTokenError("unknown_kid");
-    return crypto.subtle.importKey("jwk", { kty: "OKP", crv: "Ed25519", x: jwk.x }, { name: "Ed25519" }, false, ["verify"]);
-  }
-  if (jwk.kty !== "EC" || jwk.crv !== "P-256" || typeof jwk.x !== "string" || typeof jwk.y !== "string") {
-    throw new AccessTokenError("unknown_kid");
-  }
-  return crypto.subtle.importKey(
-    "jwk",
-    { kty: "EC", crv: "P-256", x: jwk.x, y: jwk.y },
-    { name: "ECDSA", namedCurve: "P-256" },
-    false,
-    ["verify"],
-  );
-}
-
 const isTimestamp = (x: unknown): x is number => typeof x === "number" && Number.isSafeInteger(x) && x > 0;
-const isShortString = (x: unknown, max = 200): x is string => typeof x === "string" && x.length > 0 && x.length <= max;
+
+/** Routing hint only (never authorization): does this bearer look like an EdDSA MainSite token? */
+export function looksLikeMainSiteToken(bearer: string): boolean {
+  try {
+    const h = parseJson(b64urlToBytes(bearer.split(".")[0] ?? ""));
+    return h.alg === "EdDSA";
+  } catch {
+    return false;
+  }
+}
 
 export async function verifyAccessToken(
   token: string,
@@ -104,70 +98,51 @@ export async function verifyAccessToken(
 ): Promise<VerifiedAccess> {
   if (typeof token !== "string" || token.length === 0 || token.length > 4096) throw new AccessTokenError("malformed");
   const parts = token.split(".");
-  if (parts.length !== 3 || parts.some((p) => p.length === 0)) throw new AccessTokenError("malformed");
+  if (parts.length !== 3) throw new AccessTokenError("malformed");
   const [h, p, s] = parts;
 
   const header = parseJson(b64urlToBytes(h));
-  const alg = header.alg;
-  // The algorithm must be on our allow-list ("none" and HS256 are never accepted).
-  if (typeof alg !== "string" || !(policy.allowedAlgs as ReadonlyArray<string>).includes(alg)) {
-    throw new AccessTokenError("unsupported_alg");
-  }
-  if ("crit" in header || "jku" in header || "x5u" in header || "jwk" in header) throw new AccessTokenError("malformed");
+  if (header.alg !== "EdDSA") throw new AccessTokenError("unsupported_alg"); // pinned: no ES256, HS256, none
+  for (const k of ["crit", "jku", "x5u", "jwk", "x5c"]) if (k in header) throw new AccessTokenError("malformed");
   if (header.typ !== undefined && header.typ !== "JWT") throw new AccessTokenError("malformed");
   const kid = header.kid;
-  if (!isShortString(kid)) throw new AccessTokenError("unknown_kid");
+  if (typeof kid !== "string" || kid.length === 0 || kid.length > 128) throw new AccessTokenError("unknown_kid");
   const jwk = jwks.keys.find((k) => k.kid === kid);
   if (!jwk) throw new AccessTokenError("unknown_kid");
-  if (jwk.alg !== undefined && jwk.alg !== alg) throw new AccessTokenError("unsupported_alg");
-
-  const key = await importKey(jwk, alg as "EdDSA" | "ES256");
-  const data = new TextEncoder().encode(`${h}.${p}`);
-  const sig = b64urlToBytes(s);
-  const ok =
-    alg === "EdDSA"
-      ? await crypto.subtle.verify({ name: "Ed25519" }, key, sig, data)
-      : await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, key, sig, data);
+  if ((jwk.alg !== undefined && jwk.alg !== "EdDSA") || jwk.kty !== "OKP" || jwk.crv !== "Ed25519" ||
+      typeof jwk.x !== "string" || "d" in jwk) {
+    throw new AccessTokenError("unknown_kid");
+  }
+  const key = await crypto.subtle.importKey("jwk", { kty: "OKP", crv: "Ed25519", x: jwk.x }, { name: "Ed25519" }, false, ["verify"]);
+  const ok = await crypto.subtle.verify({ name: "Ed25519" }, key, b64urlToBytes(s), new TextEncoder().encode(`${h}.${p}`));
   if (!ok) throw new AccessTokenError("bad_signature");
 
   const c = parseJson(b64urlToBytes(p));
   for (const f of FORBIDDEN_CLAIMS) if (f in c) throw new AccessTokenError("personal_data_in_token");
 
-  if (typeof c.iss !== "string" || c.iss !== policy.issuer) throw new AccessTokenError("wrong_issuer");
-  if (typeof c.aud !== "string" || c.aud !== policy.audience) throw new AccessTokenError("wrong_audience");
-  for (const [k, v] of Object.entries(policy.scope)) {
-    const claim = c[k];
-    const asText = typeof claim === "string" ? claim : Number.isSafeInteger(claim) ? String(claim) : null;
-    if (asText !== v) throw new AccessTokenError("wrong_scope");
+  if (c.iss !== policy.issuer) throw new AccessTokenError("wrong_issuer");
+  if (c.aud !== policy.audience) throw new AccessTokenError("wrong_audience"); // string only, no arrays
+  if (c.presentation_id !== policy.presentationId || c.workshop_id !== policy.workshopId) {
+    throw new AccessTokenError("wrong_event"); // integers, exact (a "16460" string is refused)
   }
+  const scope = c.scope;
+  if (!Array.isArray(scope) || scope.length !== policy.scope.length || !scope.every((x) => typeof x === "string") ||
+      new Set(scope).size !== scope.length || !policy.scope.every((x) => scope.includes(x))) {
+    throw new AccessTokenError("wrong_scope");
+  }
+  if (c.policy_version !== policy.policyVersion) throw new AccessTokenError("wrong_policy");
+  if (typeof c.sub !== "string" || !UUID.test(c.sub) || c.jti !== c.sub) throw new AccessTokenError("invalid_subject");
 
-  const { sub, jti, exp, iat, nbf } = c;
-  if (!isShortString(sub) || !isShortString(jti)) throw new AccessTokenError("missing_claims");
-  if (!isTimestamp(iat) || !isTimestamp(exp)) throw new AccessTokenError("invalid_timestamps");
-  if (nbf !== undefined && !isTimestamp(nbf)) throw new AccessTokenError("invalid_timestamps");
-  if (exp <= iat) throw new AccessTokenError("invalid_timestamps");
-  if (nbf !== undefined && (nbf < iat || nbf >= exp)) throw new AccessTokenError("invalid_timestamps");
+  const { iat, nbf, exp } = c;
+  if (!isTimestamp(iat) || !isTimestamp(nbf) || !isTimestamp(exp)) throw new AccessTokenError("invalid_timestamps");
+  if (exp <= iat || nbf < iat || nbf >= exp) throw new AccessTokenError("invalid_timestamps");
   if (exp - iat > policy.maxLifetimeSeconds) throw new AccessTokenError("lifetime_too_long");
-  if (iat > nowSeconds + policy.clockSkewSeconds) throw new AccessTokenError("not_yet_valid");
-  if (nbf !== undefined && nbf > nowSeconds + policy.clockSkewSeconds) throw new AccessTokenError("not_yet_valid");
+  if (iat > nowSeconds + policy.clockSkewSeconds || nbf > nowSeconds + policy.clockSkewSeconds) {
+    throw new AccessTokenError("not_yet_valid");
+  }
   if (exp <= nowSeconds) throw new AccessTokenError("expired");
 
-  let sessionCode: string | undefined;
-  if (c.session_code !== undefined) {
-    if (typeof c.session_code !== "string" || !/^[A-Za-z0-9]{4,8}$/.test(c.session_code)) {
-      throw new AccessTokenError("malformed");
-    }
-    sessionCode = c.session_code.toUpperCase();
-  }
-
-  const scope: Record<string, string> = {};
-  for (const k of Object.keys(policy.scope)) scope[k] = policy.scope[k];
-  return { sub, jti, exp, iat, kid, scope, sessionCode };
-}
-
-/** Grant expiry is pinned to the token's own exp — never extended without a fresh verified token. */
-export function grantExpiry(access: VerifiedAccess): Date {
-  return new Date(access.exp * 1000);
+  return { sub: c.sub.toLowerCase(), exp, iat, kid };
 }
 
 export async function sha256Hex(s: string): Promise<string> {
@@ -175,17 +150,20 @@ export async function sha256Hex(s: string): Promise<string> {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** Server-derived response identity: stable per lead + presentation, never chosen by the client. */
-export async function participantKey(issuer: string, access: VerifiedAccess): Promise<string> {
-  const input = `${issuer}|${access.sub}|${access.scope.presentation ?? ""}|${access.scope.workshop ?? ""}`;
-  return "lead_" + (await sha256Hex(input)).slice(0, 32);
+/** Server-derived response identity: stable per MainSite capture + event, never client-chosen. */
+export async function participantKey(policy: AccessTokenPolicy, access: VerifiedAccess): Promise<string> {
+  return "lead_" + (await sha256Hex(`${policy.issuer}|${access.sub}|${policy.presentationId}|${policy.workshopId}`)).slice(0, 32);
 }
 
+export const MAINSITE_ISSUER = "https://www.joshpenzell.com";
+
 export const PNW2_POLICY: AccessTokenPolicy = {
-  issuer: "https://www.joshpenzell.com",
-  audience: "pnw2-interactive",
-  scope: { presentation: "16460", workshop: "9503" },
+  issuer: MAINSITE_ISSUER,
+  audience: "pnw2:e10466e1-025e-4530-8f10-a62efb7a9ea8",
+  presentationId: 16460,
+  workshopId: 9503,
+  scope: ["slides:interact", "session:qa"],
+  policyVersion: 1,
   maxLifetimeSeconds: 300,
-  clockSkewSeconds: 60,
-  allowedAlgs: ["EdDSA", "ES256"],
+  clockSkewSeconds: 30,
 };

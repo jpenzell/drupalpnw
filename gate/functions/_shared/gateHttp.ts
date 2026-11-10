@@ -1,6 +1,7 @@
 // STAGED — shared HTTP helpers and dependency contract for the gate functions.
 // Pure (no Deno globals, no npm imports) so handlers are testable under Bun.
-import type { AccessTokenPolicy, PublicJwk } from "./accessToken.ts";
+import type { AccessTokenPolicy, PublicJwk, VerifiedAccess } from "./accessToken.ts";
+import type { IntrospectResult } from "./mainsite.ts";
 
 export interface RpcResult {
   data: unknown;
@@ -13,8 +14,9 @@ export interface Rpc {
 
 export interface GateDeps {
   admin: Rpc; // service-role client — the only caller allowed to execute gate_* functions
-  getUserId(bearer: string): Promise<string | null>; // verified login token → user id
-  jwks(): Promise<{ keys: PublicJwk[] }>;
+  getUserId(bearer: string): Promise<string | null>; // verified Lovable Cloud login → user id
+  jwks(): Promise<{ keys: PublicJwk[] }>; // fixed {issuer}/api/drupal-access/jwks
+  introspect(token: string, access: VerifiedAccess): Promise<IntrospectResult>; // per action, uncached
   policy: AccessTokenPolicy;
   allowedOrigins: string[];
   presentationPassword: string | undefined;
@@ -22,7 +24,7 @@ export interface GateDeps {
 }
 
 export const ALLOW_HEADERS =
-  "authorization, x-client-info, apikey, content-type, x-pnw2-grant, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version";
+  "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version";
 
 export function corsFor(req: Request, allowed: string[]): Record<string, string> {
   const origin = req.headers.get("Origin") ?? "";
@@ -30,6 +32,7 @@ export function corsFor(req: Request, allowed: string[]): Record<string, string>
     "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : allowed[0] ?? "null",
     "Access-Control-Allow-Headers": ALLOW_HEADERS,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Cache-Control": "private, no-store",
     Vary: "Origin",
   };
 }
@@ -38,7 +41,7 @@ export function jsonResponse(cors: Record<string, string>, body: unknown, status
   return new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 }
 
-/** Browser callers must come from an allowed origin. Requests without Origin are server-side. */
+/** Browser callers must come from an allowed origin. (Origin is a CORS courtesy, never authorization.) */
 export function originAllowed(req: Request, allowed: string[]): boolean {
   const origin = req.headers.get("Origin");
   return origin === null || allowed.includes(origin);
@@ -46,14 +49,9 @@ export function originAllowed(req: Request, allowed: string[]): boolean {
 
 const STATUS: Record<string, number> = {
   not_configured: 503,
+  maintenance: 503,
   malformed: 400,
-  wrong_scope: 403,
-  expired: 401,
-  lifetime_too_long: 401,
-  session_required: 400,
   session_inactive: 409,
-  replayed: 409,
-  grant_invalid: 401,
   poll_not_found: 404,
   wrong_session: 403,
   poll_closed: 409,
@@ -73,13 +71,7 @@ export function mapDbError(message: string): { code: string; status: number } {
   return { code: "unavailable", status: 503 };
 }
 
-export const GRANT_RE = /^[0-9a-f]{64}$/;
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export function randomGrant(): string {
-  const b = crypto.getRandomValues(new Uint8Array(32));
-  return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
-}
 
 export function bearerOf(req: Request): string | null {
   const a = req.headers.get("Authorization");

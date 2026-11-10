@@ -1,9 +1,9 @@
 // Binds the gate core to the real backend client and the MainSite parent frame.
 // With GATE_MODE "off" (current), every export behaves exactly like the existing direct calls.
 import { supabase } from "@/integrations/supabase/client";
-import { GATE_MODE, HANDSHAKE_MESSAGE_TYPE, MAINSITE_CAPTURE_URL, MAINSITE_ORIGIN, RENEW_BEFORE_MS } from "./config";
+import { GATE_MODE, MAINSITE_CAPTURE_URL, MAINSITE_ORIGIN, RENEW_BEFORE_MS } from "./config";
 import { createGateCore, type TokenSource } from "./gateCore";
-import { isEmbedded, startHandshake } from "./parentHandshake";
+import { createParentChannel, isEmbedded } from "./parentHandshake";
 import { standaloneRedirectTarget } from "./standalone";
 
 type InvokeOptions = Parameters<typeof supabase.functions.invoke>[1];
@@ -14,20 +14,15 @@ export function isEmbeddedWindow(): boolean {
 
 function frameTokenSource(): TokenSource | null {
   if (GATE_MODE === "off" || !isEmbeddedWindow()) return null;
-  const subs = new Set<(t: string) => void>();
-  let handle: ReturnType<typeof startHandshake> | null = null;
-  const ensure = () => {
-    if (handle) return handle;
-    handle = startHandshake(
-      { parentOrigin: MAINSITE_ORIGIN, messageType: HANDSHAKE_MESSAGE_TYPE },
-      { win: window, postToParent: (m, origin) => window.parent.postMessage(m, origin) },
-      (t) => subs.forEach((s) => s(t)),
-    );
-    return handle;
-  };
+  let channel: ReturnType<typeof createParentChannel> | null = null;
+  const ensure = () =>
+    (channel ??= createParentChannel(MAINSITE_ORIGIN, {
+      win: window,
+      postToParent: (m, origin) => window.parent.postMessage(m, origin),
+    }));
   return {
-    request: () => ensure().requestToken(),
-    onToken: (cb) => { subs.add(cb); return () => subs.delete(cb); },
+    request: () => ensure().request(),
+    onToken: (cb) => ensure().onToken(cb),
   };
 }
 
@@ -38,9 +33,9 @@ export const gate = createGateCore({
   renewBeforeMs: RENEW_BEFORE_MS,
 });
 
-/** Drop-in for supabase.functions.invoke on guarded paid functions: adds the grant when held. */
+/** Drop-in for supabase.functions.invoke on guarded paid functions: adds the attendee token when held. */
 export function invokeFunction<T = any>(name: string, options?: InvokeOptions) {
-  return supabase.functions.invoke<T>(name, gate.withGrantHeader(options));
+  return supabase.functions.invoke<T>(name, gate.withAccessHeader(options));
 }
 
 /** In enforce mode, sends standalone attendee entry points to MainSite capture. Returns true if redirecting. */
@@ -61,9 +56,9 @@ export function redirectStandaloneAttendee(joining = false): boolean {
 
 /**
  * Presenter session creation once the gate is on: proves presenter authority with the existing
- * presentation password (checked server-side), then creates a session bound to this event.
+ * presentation password (checked server-side), then creates the event's canonical session.
  */
-export async function createPresenterSessionGated(askPassword: () => string | null = () => window.prompt("Presenter password") ) {
+export async function createPresenterSessionGated(askPassword: () => string | null = () => window.prompt("Presenter password")) {
   const create = () => supabase.functions.invoke("create-presenter-session", { body: { action: "create_session" } });
   let res = await create();
   if (res.error) {
