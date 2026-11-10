@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
 # Disposable local Postgres for gate tests only (never the project backend).
-# Usage: gate/test/pg-local.sh start|stop   — listens on 127.0.0.1:54329, data in /tmp.
+# Usage: gate/test/pg-local.sh start|stop — listens on 127.0.0.1:54329, data under /tmp.
+# Postgres refuses to run as root, so it runs as an existing unprivileged account.
 set -euo pipefail
 DIR=/tmp/pnw2-gate-pg
 PORT=54329
-USER_NAME=pgtest
+RUN_AS=${PNW2_PG_RUN_AS:-lovable}
+as_user() { if [ "$(id -u)" = "0" ]; then runuser -u "$RUN_AS" -- "$@"; else "$@"; fi; }
 case "${1:-start}" in
   start)
-    id "$USER_NAME" >/dev/null 2>&1 || useradd -M -s /usr/sbin/nologin "$USER_NAME"
     if [ ! -f "$DIR/PG_VERSION" ]; then
-      mkdir -p "$DIR" && chown "$USER_NAME" "$DIR"
-      su -s /bin/sh "$USER_NAME" -c "initdb -D $DIR -U $USER_NAME --auth=trust -E UTF8 >/dev/null"
+      mkdir -p "$DIR"
+      [ "$(id -u)" = "0" ] && chown "$RUN_AS" "$DIR"
+      as_user initdb -D "$DIR" -U pgtest --auth=trust -E UTF8 >/dev/null
     fi
-    if ! su -s /bin/sh "$USER_NAME" -c "pg_ctl -D $DIR status" >/dev/null 2>&1; then
-      su -s /bin/sh "$USER_NAME" -c "pg_ctl -D $DIR -l $DIR/log -o '-p $PORT -k $DIR -c listen_addresses=127.0.0.1' -w start >/dev/null"
+    if ! as_user pg_ctl -D "$DIR" status >/dev/null 2>&1; then
+      as_user pg_ctl -D "$DIR" -l "$DIR/log" -o "-p $PORT -k $DIR -c listen_addresses=127.0.0.1" -w start >/dev/null
     fi
-    echo "postgres://$USER_NAME@127.0.0.1:$PORT/postgres"
+    echo "postgres://pgtest@127.0.0.1:$PORT/postgres"
     ;;
   stop)
-    su -s /bin/sh "$USER_NAME" -c "pg_ctl -D $DIR -m fast stop" >/dev/null 2>&1 || true
+    as_user pg_ctl -D "$DIR" -m fast stop >/dev/null 2>&1 || true
     ;;
 esac
