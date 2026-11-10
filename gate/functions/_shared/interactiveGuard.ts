@@ -1,6 +1,6 @@
 // STAGED — the check every guarded paid function runs before any provider work.
 // Access = a MainSite attendee token (verified + introspected now) while interactive services are
-// enabled, OR a presenter login authorized with the existing PRESENTATION_PASSWORD (server-recorded).
+// enabled — no live session needed (post-event self-guided demos mutate no session data) — OR a presenter login authorized with the existing PRESENTATION_PASSWORD (server-recorded).
 // An EdDSA bearer is always treated as an attendee token — it never falls through to presenter
 // checks, so attendee tokens never grant host actions. Bare anonymous sign-ins are never enough.
 import { looksLikeMainSiteToken } from "./accessToken.ts";
@@ -8,7 +8,7 @@ import { authenticateAttendee } from "./attendee.ts";
 import { bearerOf, corsFor, type GateDeps, jsonResponse, originAllowed } from "./gateHttp.ts";
 
 export type Access =
-  | { kind: "attendee"; participant_key: string; session_id: string }
+  | { kind: "attendee"; participant_key: string } // self-guided: no live session required
   | { kind: "presenter"; user_id: string };
 
 export async function checkInteractiveAccess(req: Request, deps: GateDeps): Promise<Access | null> {

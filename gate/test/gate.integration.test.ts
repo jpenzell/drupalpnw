@@ -69,12 +69,38 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres (final MainS
     assert.equal((await presenterCall({ action: "create_session" })).body.error, "presenter_required");
   });
 
-  test("before any canonical session exists, attendees get session_inactive", async () => {
-    assert.equal((await act(await token(), { action: "identify" })).body.error, "session_inactive");
+  test("post-event, no live session: deck entry and paid demos work; live writes say not running; nothing is created", async () => {
+    const [{ n: before }] = await db.sql`SELECT count(*)::int AS n FROM public.sessions`;
+    const t = await token();
+    const id = await act(t, { action: "identify" });
+    assert.equal(id.status, 200);
+    assert.equal(id.body.data.session, null);
+    assert.match(id.body.data.participant_key, /^lead_[0-9a-f]{32}$/);
+    const paid = new Request("https://fn.local", { method: "POST", headers: { Origin: ORIGIN, Authorization: `Bearer ${t}` } });
+    assert.equal((await checkInteractiveAccess(paid, deps))?.kind, "attendee");
+    assert.equal(await denyWithoutAccess(paid, deps), null);
+    for (const body of [{ action: "poll_response", poll_id: crypto.randomUUID(), value: { text: "x" } },
+                        { action: "story_volunteer", name: "Ada", mode: "slot" }, { action: "story_word", word: "x" },
+                        { action: "my_responses", poll_id: crypto.randomUUID() }]) {
+      const r = await act(t, body);
+      assert.equal(r.status, 409, body.action);
+      assert.equal(r.body.error, "session_inactive", body.action);
+    }
+    const [{ n: after }] = await db.sql`SELECT count(*)::int AS n FROM public.sessions`;
+    assert.equal(after, before); // never auto-creates a presenter/session
+    // ...and an attendee token still cannot reach host actions without a live session
+    assert.equal((await read(await post(handleCreatePresenterSession, { action: "create_session" }, { Authorization: `Bearer ${t}` }))).status, 403);
+  });
+
+  test("presenter status reflects only a password authorization", async () => {
+    assert.equal((await presenterCall({ action: "status" })).body.authorized_until, null);
+    assert.equal((await presenterCall({ action: "status" }, bareAnon)).body.authorized_until, null);
+    assert.equal((await read(await post(handleCreatePresenterSession, { action: "status" }))).status, 401);
   });
 
   test("presenter: existing password authorizes the login, then creates the canonical event session", async () => {
     assert.equal((await presenterCall({ action: "authorize", password: PASSWORD })).status, 200);
+    assert.ok((await presenterCall({ action: "status" })).body.authorized_until);
     const c = await presenterCall({ action: "create_session" });
     assert.equal(c.status, 200);
     oldPollId = (await db.sql`INSERT INTO public.polls (session_id, slide_id, poll_type) VALUES (${c.body.session.id}, 'old', 'text') RETURNING id`)[0].id;
@@ -90,7 +116,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres (final MainS
     [{ id: mcPollId }] = await db.sql`INSERT INTO public.polls (session_id, slide_id, poll_type, poll_config) VALUES (${session.id}, 'duck', 'multiple_choice', ${{ options: ["Duck", "Rabbit"] }}) RETURNING id`;
   });
 
-  test("a bare anonymous sign-in owning a session is neither presenter nor a usable attendee session", async () => {
+  test("a bare anonymous sign-in owning a session is neither presenter nor the attendee live session", async () => {
     await db.sql`INSERT INTO public.sessions (code, presenter_id) VALUES ('BARE', ${bareAnon})`;
     const r = new Request("https://x", { headers: { Origin: ORIGIN, Authorization: `Bearer user:${bareAnon}` } });
     assert.equal(await checkInteractiveAccess(r, deps), null);
@@ -190,6 +216,8 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres (final MainS
   });
 
   test("polls outside the canonical session (older or arbitrary sessions) are refused", async () => {
+    const [old] = await db.sql`SELECT is_active FROM public.sessions WHERE id = (SELECT session_id FROM public.polls WHERE id = ${oldPollId})`;
+    assert.equal(old.is_active, true); // older sessions are left alone, never closed
     const t = await token();
     assert.equal((await act(t, { action: "poll_response", poll_id: oldPollId, value: { text: "x" } })).body.error, "wrong_session");
     assert.equal((await act(t, { action: "my_responses", poll_id: oldPollId })).body.error, "wrong_session");
@@ -297,6 +325,9 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres (final MainS
         "SELECT public.gate_identify('lead_00000000000000000000000000000000')",
         "SELECT public.gate_submit_poll_response('lead_00000000000000000000000000000000', gen_random_uuid(), '{}')",
         "SELECT public.gate_attendee_session('lead_00000000000000000000000000000000')",
+        "SELECT public.gate_require_enabled('lead_00000000000000000000000000000000')",
+        "SELECT public.gate_canonical_session()",
+        "SELECT public.gate_presenter_status(gen_random_uuid())",
         "SELECT * FROM public.presenter_authorizations",
         "SELECT * FROM public.presenter_sessions",
         "SELECT * FROM public.gate_config",

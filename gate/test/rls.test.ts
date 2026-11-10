@@ -87,7 +87,7 @@ describe.skipIf(!DB_TESTS_ENABLED)("RLS: dormant → enforce → maintenance", (
   });
 });
 
-test("no staged SQL recreates the old anonymous/self write policies (rollback never reopens them)", () => {
+test("no staged SQL reopens old anonymous writes, drops schema, or closes/deletes sessions", () => {
   const root = join(import.meta.dir, "..");
   const staged = ["migrations", "data"].flatMap((d) => readdirSync(join(root, d)).map((f) => readFileSync(join(root, d, f), "utf8")));
   for (const name of ["Participants can submit responses without sign-in", "Participants can update responses without sign-in",
@@ -96,4 +96,8 @@ test("no staged SQL recreates the old anonymous/self write policies (rollback ne
     for (const sql of staged) assert.ok(!new RegExp(`CREATE POLICY "${name}"`).test(sql), name);
   }
   for (const sql of staged) assert.ok(!/\bDROP\s+(TABLE|SCHEMA|COLUMN)\b/i.test(sql), "no destructive DROP");
+  for (const sql of staged) {
+    assert.ok(!/UPDATE\s+public\.sessions\s+SET\s+is_active/i.test(sql), "never closes sessions");
+    assert.ok(!/DELETE\s+FROM\s+public\.(sessions|responses|polls|story_\w+)/i.test(sql), "never deletes session data");
+  }
 });
