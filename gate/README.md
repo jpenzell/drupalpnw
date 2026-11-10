@@ -1,6 +1,11 @@
-# PNW2 interactive gate: staged and inactive (final MainSite contract)
+# PNW2 interactive gate: Stage 1 live and dormant, later stages staged (final MainSite contract)
 
-Nothing in this folder is deployed, migrated or published.
+**Status:** Stage 1 was applied on 2026-11-10 (see `STAGE1_APPLIED.md`):
+- `01_dormant_gate.sql` is applied;
+- the config row is in maintenance;
+- the 7 shared modules are deployed, along with `submit-interaction` and `create-presenter-session`.
+
+Everything else in this folder is still undeployed and unapplied, and nothing is published.
 
 This folder targets the final MainSite contract from candidate `9f83abd40800c045c0b9cda2f03a23a3386fad38` (the contact-review document, "External-deck protocol"), with one correction: the issuer and parent origin are **`https://www.joshpenzell.com`**. The MainSite document assumed the apex domain; that is being corrected on their side.
 

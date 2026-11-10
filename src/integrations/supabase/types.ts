@@ -164,6 +164,41 @@ export type Database = {
         }
         Relationships: []
       }
+      gate_config: {
+        Row: {
+          canonical_session_id: string | null
+          id: number
+          interactive_enabled: boolean
+          presentation_id: number
+          updated_at: string
+          workshop_id: number
+        }
+        Insert: {
+          canonical_session_id?: string | null
+          id?: number
+          interactive_enabled?: boolean
+          presentation_id: number
+          updated_at?: string
+          workshop_id: number
+        }
+        Update: {
+          canonical_session_id?: string | null
+          id?: number
+          interactive_enabled?: boolean
+          presentation_id?: number
+          updated_at?: string
+          workshop_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gate_config_canonical_session_id_fkey"
+            columns: ["canonical_session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       polls: {
         Row: {
           created_at: string
@@ -197,6 +232,56 @@ export type Database = {
             foreignKeyName: "polls_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presenter_authorizations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      presenter_sessions: {
+        Row: {
+          created_at: string
+          presentation_id: number
+          presenter_user_id: string
+          session_id: string
+          workshop_id: number
+        }
+        Insert: {
+          created_at?: string
+          presentation_id: number
+          presenter_user_id: string
+          session_id: string
+          workshop_id: number
+        }
+        Update: {
+          created_at?: string
+          presentation_id?: number
+          presenter_user_id?: string
+          session_id?: string
+          workshop_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presenter_sessions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: true
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -476,6 +561,48 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      gate_attendee_session: {
+        Args: { p_participant_key: string }
+        Returns: string
+      }
+      gate_authorize_presenter: { Args: { p_user: string }; Returns: string }
+      gate_canonical_session: { Args: never; Returns: string }
+      gate_check_access: {
+        Args: { p_participant_key: string; p_presenter_user: string }
+        Returns: Json
+      }
+      gate_create_presenter_session: { Args: { p_user: string }; Returns: Json }
+      gate_identify: { Args: { p_participant_key: string }; Returns: Json }
+      gate_my_responses: {
+        Args: { p_participant_key: string; p_poll_id: string }
+        Returns: Json
+      }
+      gate_presenter_status: { Args: { p_user: string }; Returns: string }
+      gate_require_enabled: {
+        Args: { p_participant_key: string }
+        Returns: undefined
+      }
+      gate_story_volunteer: {
+        Args: { p_mode: string; p_name: string; p_participant_key: string }
+        Returns: Json
+      }
+      gate_story_word: {
+        Args: { p_participant_key: string; p_word: string }
+        Returns: Json
+      }
+      gate_submit_poll_response: {
+        Args: { p_participant_key: string; p_poll_id: string; p_value: Json }
+        Returns: Json
+      }
+      gate_valid_value: {
+        Args: {
+          p_config: Json
+          p_type: Database["public"]["Enums"]["poll_type"]
+          p_value: Json
+        }
+        Returns: boolean
+      }
+      is_proven_presenter: { Args: { _session_id: string }; Returns: boolean }
       is_session_presenter: { Args: { _session_id: string }; Returns: boolean }
       move_to_dlq: {
         Args: {

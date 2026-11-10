@@ -15,7 +15,9 @@ test("every deployed function that calls a paid provider is guarded, except free
   const expected = [...GUARDED_FUNCTIONS, "translate-caption"].sort();
   assert.deepEqual(paid.sort(), expected);
   assert.equal(GUARDED_FUNCTIONS.length, 12);
-  for (const d of dirs) assert.ok((GUARDED_FUNCTIONS as readonly string[]).includes(d) || (UNGUARDED_FUNCTIONS as readonly string[]).includes(d) || d === "send-connect-notification", `unclassified function ${d}`);
+  // The gate's own functions (deployed at Stage 1) call no provider; they are the gate itself.
+  const GATE_OWN = ["submit-interaction", "create-presenter-session"];
+  for (const d of dirs) assert.ok((GUARDED_FUNCTIONS as readonly string[]).includes(d) || (UNGUARDED_FUNCTIONS as readonly string[]).includes(d) || GATE_OWN.includes(d) || d === "send-connect-notification", `unclassified function ${d}`);
 });
 
 for (const name of GUARDED_FUNCTIONS) {
