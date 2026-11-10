@@ -50,7 +50,7 @@ export class AccessTokenError extends Error {
 // Claims that would mean personal data travelled in the token; MainSite agreed not to send them.
 const FORBIDDEN_CLAIMS = ["email", "name", "given_name", "family_name", "phone_number", "preferred_username"];
 
-function b64urlToBytes(s: string): Uint8Array {
+function b64urlToBytes(s: string): Uint8Array<ArrayBuffer> {
   if (!/^[A-Za-z0-9_-]*$/.test(s)) throw new AccessTokenError("malformed");
   const pad = s.length % 4 === 0 ? "" : "=".repeat(4 - (s.length % 4));
   let bin: string;
@@ -59,7 +59,7 @@ function b64urlToBytes(s: string): Uint8Array {
   } catch {
     throw new AccessTokenError("malformed");
   }
-  const out = new Uint8Array(bin.length);
+  const out = new Uint8Array(new ArrayBuffer(bin.length));
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
   return out;
 }
