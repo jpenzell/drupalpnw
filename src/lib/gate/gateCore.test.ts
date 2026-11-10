@@ -11,7 +11,7 @@ function fakeTokens() {
 
 const SESSION = { id: "s1", code: "ABCD", current_slide: "S1", is_active: true, created_at: "x" };
 
-function harness(mode: "off" | "dual" | "enforce", opts: { framed?: boolean; deny?: boolean } = {}) {
+function harness(mode: "off" | "dual" | "enforce", opts: { framed?: boolean; deny?: boolean; noSession?: boolean; failCode?: string } = {}) {
   let clock = 1_000_000;
   const timers: Array<{ fn: () => void; at: number }> = [];
   const calls: Array<{ name: string; opts: any }> = [];
@@ -19,17 +19,19 @@ function harness(mode: "off" | "dual" | "enforce", opts: { framed?: boolean; den
     calls.push({ name, opts: o });
     if (opts.deny) return { data: null, error: "401" };
     const exp = new Date(clock + 300_000).toISOString();
-    if ((o.body as any)?.action === "identify") return { data: { ok: true, data: { participant_key: "lead_k", session: SESSION }, expires_at: exp }, error: null };
+    if ((o.body as any)?.action === "identify") return { data: { ok: true, data: { participant_key: "lead_k", session: opts.noSession ? null : SESSION }, expires_at: exp }, error: null };
+    if (opts.failCode) return { data: { error: opts.failCode }, error: "409" };
     return { data: { ok: true, data: { id: "r1" }, expires_at: exp }, error: null };
   };
   const tokens = fakeTokens();
+  const errors: string[] = [];
   const core = createGateCore({
-    mode, invoke, tokens: opts.framed === false ? null : tokens.src,
+    mode, invoke, onError: (c) => errors.push(c), tokens: opts.framed === false ? null : tokens.src,
     now: () => clock,
     setTimer: (fn, ms) => { const t = { fn, at: clock + ms }; timers.push(t); return t; },
     clearTimer: (t) => { const i = timers.indexOf(t as any); if (i >= 0) timers.splice(i, 1); },
   });
-  return { core, calls, tokens, advance: (ms: number) => { clock += ms; }, timers, clock: () => clock };
+  return { core, calls, tokens, errors, advance: (ms: number) => { clock += ms; }, timers, clock: () => clock };
 }
 
 test("off mode: always the existing direct path; no handshake, no header", async () => {
@@ -87,4 +89,17 @@ test("dual without access keeps the old path; enforce blocks; standalone gets no
   assert.equal(await harness("dual").core.route(async () => "gated", async () => "direct", "blocked"), "direct");
   assert.equal(await harness("enforce").core.route(async () => "gated", async () => "direct", "blocked"), "blocked");
   assert.equal(await harness("enforce", { framed: false }).core.connect(), null);
+});
+
+test("post-event: access without a live session; live writes report session_inactive", async () => {
+  const h = harness("enforce", { noSession: true, failCode: "session_inactive" });
+  const p = h.core.connect();
+  await h.tokens.send("tok.1.sig");
+  const a = await p;
+  assert.equal(a?.session, null);
+  assert.equal(a?.participantKey, "lead_k");
+  assert.deepEqual((h.core.withAccessHeader({}) as { headers?: unknown })?.headers, { Authorization: "Bearer tok.1.sig" });
+  const r = await h.core.submit("poll_response", { poll_id: "p", value: { a: 1 } });
+  assert.deepEqual(r, { ok: false, error: "session_inactive" });
+  assert.deepEqual(h.errors, ["session_inactive"]);
 });
