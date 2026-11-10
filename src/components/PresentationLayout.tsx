@@ -461,14 +461,14 @@ export const PresentationLayout = ({
 
 
       {isPresenter && !chromeless && (
-        <footer className="border-t bg-card/80 backdrop-blur-sm px-6 py-4 flex items-center justify-between shadow-sm">
-          <Button variant="outline" size="lg" onClick={() => onNavigate(currentIndex - 1)} disabled={currentIndex === 0} className="font-semibold">
-            <ChevronLeft className="h-4 w-4 mr-2" />Previous
+        <footer className="border-t bg-card/80 backdrop-blur-sm px-3 sm:px-6 py-4 flex items-center justify-between gap-2 shadow-sm">
+          <Button variant="outline" size="lg" onClick={() => onNavigate(currentIndex - 1)} disabled={currentIndex === 0} className="font-semibold" aria-label="Previous">
+            <ChevronLeft className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Previous</span>
           </Button>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-mono text-muted-foreground bg-muted px-4 py-2 rounded-full">{currentScreen}</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xs sm:text-sm font-mono text-muted-foreground bg-muted px-3 sm:px-4 py-2 rounded-full whitespace-nowrap truncate">{currentScreen}</span>
             {sparesRemaining > 0 && (
-              <span className="text-xs uppercase tracking-wider font-semibold text-foreground bg-spotlight/20 border border-spotlight/45 rounded-full px-3 py-1">
+              <span className="hidden sm:inline text-xs uppercase tracking-wider font-semibold text-foreground bg-spotlight/20 border border-spotlight/45 rounded-full px-3 py-1">
                 {sparesRemaining} spare{sparesRemaining === 1 ? "" : "s"} left
               </span>
             )}

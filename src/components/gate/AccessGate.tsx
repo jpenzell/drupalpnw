@@ -64,7 +64,7 @@ function NoLiveActivityNotice() {
   const [hidden, setHidden] = useState(false);
   if (hidden) return null;
   return (
-    <div role="status" className="fixed top-0 inset-x-0 z-[60] flex items-center justify-center gap-3 bg-secondary text-secondary-foreground px-4 py-2 font-body text-sm">
+    <div role="status" className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-xl flex items-center justify-center gap-3 rounded-lg bg-secondary text-secondary-foreground px-4 py-2 font-body text-sm shadow-lg">
       <span>Live activity isn't running right now — explore the deck and demos on your own.</span>
       <button type="button" className="underline" onClick={() => setHidden(true)}>Dismiss</button>
     </div>

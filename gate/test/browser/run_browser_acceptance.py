@@ -328,6 +328,10 @@ async def main():
         frame = page.frames[1]
         sw = await frame.evaluate("[document.documentElement.scrollWidth, document.documentElement.clientWidth]")
         check("small screen: no horizontal overflow in the framed deck", sw[0] <= sw[1], str(sw))
+        nb = await fr.get_by_role("button", name="Next").first.bounding_box()
+        pb = await fr.get_by_role("button", name="Previous").first.bounding_box()
+        check("small screen: Previous/Next fully on screen", nb and pb and pb["x"] >= 0 and nb["x"] + nb["width"] <= 390, f"prev={pb and round(pb['x'])} next_right={nb and round(nb['x'] + nb['width'])}")
+        await page.screenshot(path=str(SHOTS / "11_small_valid_notice.png"))
         dismiss = fr.get_by_role("button", name="Dismiss")
         await dismiss.focus()
         await page.keyboard.press("Enter")
