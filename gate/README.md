@@ -79,7 +79,7 @@ This folder targets the final MainSite contract from candidate `9f83abd40800c045
 ## Published vs candidate
 The live bundle `index-BJwF2DXK.js` contains markers from commit `8ee343f`. This is evidence, not attestation: the hosting service exposes no commit id, and a byte-identical rebuild was not done.
 
-`git diff --stat 8ee343f -- src` shows 33 files:
+`git diff --stat 8ee343f -- src` shows 32 files:
 - `src/lib/gate/**` — new.
 - `SessionContext` and `PollContext` — branches that only run when the gate flag is on.
 - 3 story/number screens — wrapped in `gate.route`.
@@ -107,9 +107,9 @@ No new secret is needed on this side. `PRESENTATION_PASSWORD` already exists, an
 | Stage | Steps | When live |
 |---|---|---|
 | 1. Dormant | Apply `migrations/01_dormant_gate.sql` (additive; no policy or grant changes). Run `data/stage1_config.sql` (maintenance). Copy `_shared/{accessToken,mainsite,attendee,gateHttp,interactiveGuard,runtime,guardRuntime}.ts` and deploy `submit-interaction` and `create-presenter-session`. Attendee actions answer `maintenance`. | Live now. Harmless: today's policies are untouched (tested). |
-| 2. Page dual | Set `GATE_MODE = "dual"` and publish. In the MainSite frame, attendees use tokens when available; elsewhere the old path. Presenter creation moves to the password path; the presenter creates the canonical session. | On publish. |
-| 3. Synthetic check | Run `data/stage3_enable_interactive.sql`. One synthetic MainSite capture: handshake, identify, one answer, revoke on MainSite, next action denied. No real leads. | Live now. |
-| 4. Enforce | Deploy the 12 guarded copies and the retired notification. Apply `migrations/02_enforce.sql`, then immediately set `GATE_MODE = "enforce"` and publish (standalone `?join=` and `/connect` redirect to `https://www.joshpenzell.com/p/ai-for-all-minds-pnw-drupal-summit-2026-10-17`). | SQL and functions live now; page on publish. |
+| 2. Page dual | Set `GATE_MODE = "dual"` and publish. In the MainSite frame, attendees use tokens when available; elsewhere the old path. Presenter creation moves to the password path. A live session is only needed if Josh runs live polls or the story game. | On publish. |
+| 3. Synthetic check | Run `data/stage3_enable_interactive.sql`. One synthetic MainSite capture: handshake, identify (no live session, so the deck opens and live writes say not running), revoke on MainSite, next action denied. No real leads and no provider call. | Live now. |
+| 4. Enforce | Deploy the 12 guarded copies and the retired notification. Apply `migrations/02_enforce.sql`, then immediately set `GATE_MODE = "enforce"` and publish (every standalone page except `/presenter` and unsubscribe needs presenter proof, otherwise it redirects to `https://www.joshpenzell.com/p/ai-for-all-minds-pnw-drupal-summit-2026-10-17`; framed pages need a MainSite token). | SQL and functions live now; page on publish. |
 | Rollback | Run `data/rollback_maintenance.sql`: attendee actions and attendee paid calls are denied with `maintenance`. Enforced policies stay; no old anonymous write path is reopened; nothing is dropped. MainSite revokes grants as authorized and disables interactive entry; the public recording and transcript stay open. | Live now. |
 
 ## Test evidence (synthetic only)
