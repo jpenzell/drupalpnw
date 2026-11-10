@@ -15,4 +15,5 @@
 # Interactive access gate (MainSite canonical)
 - [x] Stage 0: staged implementation aligned to the final MainSite contract (Ed25519, per-action introspection, server-side canonical session, nonce handshake, maintenance-only rollback, 12 guarded paid functions, post-event self-guided access with whole-deck entry gate) — 69 synthetic tests + 36/36 offline browser checks pass (gate/ACCEPTANCE.md).
 - [ ] MainSite: issuer https://www.joshpenzell.com; gated-route apex → www canonicalization; secure Ed25519 signing key + JWKS; gate ON; introspect rate budget — blocked on MainSite.
-- [ ] Stages 1–4 activation and publish — blocked on coordinated window and approval.
+- [x] Stage 1: dormant migration, maintenance config, shared modules, submit-interaction and create-presenter-session live; denials verified (gate/STAGE1_APPLIED.md).
+- [ ] Stages 2–4 (dual publish, synthetic capture, enforce) — blocked on MainSite key/source release verification and coordinated window.
