@@ -51,6 +51,7 @@ export function createGateCore(deps: GateCoreDeps) {
   let active = false;
   let renewTimer: unknown = null;
   let unsubscribe: (() => void) | null = null;
+  let inflight: Promise<Access | null> | null = null;
   const listeners = new Set<(a: Access | null) => void>();
   const emit = () => listeners.forEach((l) => l(access()));
 
@@ -101,8 +102,9 @@ export function createGateCore(deps: GateCoreDeps) {
     ensureSubscribed();
     const existing = access();
     if (existing) return existing;
+    if (inflight) return inflight; // concurrent callers share one handshake
     current = null;
-    return new Promise<Access | null>((resolve) => {
+    inflight = new Promise<Access | null>((resolve) => {
       let done = false;
       const off = listen((a) => {
         if (!done && a) { done = true; off(); clearTimer(t); resolve(a); }
@@ -110,6 +112,9 @@ export function createGateCore(deps: GateCoreDeps) {
       const t = setTimer(() => { if (!done) { done = true; off(); resolve(null); } }, deps.tokenWaitMs ?? 8_000);
       deps.tokens!.request();
     });
+    const p = inflight;
+    void p.finally(() => { if (inflight === p) inflight = null; });
+    return p;
   }
 
   function disconnect() {
