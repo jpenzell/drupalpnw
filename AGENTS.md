@@ -12,3 +12,4 @@
 - Keep closing resources in the shared connection page, including its confirmation state, so QR visitors and joined participants have identical access before and after submitting.
 - Keep participant captions outside the scrolling slide in a dynamic-viewport-height layout, and carry the active join code to the standalone connection form so its persistent caption controls receive the same broadcast.
 - Present personal clinical evidence as rebuilt score graphics and report charts, never as the report page itself; transcribe exact values and preserve censored values without inventing measurements, because the report's fine print is unreadable at projector distance and it names the presenter.
+- Stage interactive-gate backend code under `gate/` (not `supabase/functions` or migrations) until coordinated activation, because edge functions and migrations go live on the shared backend immediately; attendee grants never outlive the MainSite token that created them.
