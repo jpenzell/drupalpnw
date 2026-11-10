@@ -85,7 +85,7 @@ test("identity is derived from the capture UUID and event, stable across renewed
   const { v } = await setup();
   const a = await participantKey(PNW2_POLICY, await v());
   assert.equal(a, await participantKey(PNW2_POLICY, await v({ iat: NOW - 10, nbf: NOW - 10, exp: NOW + 290 })));
-  assert.notEqual(a, await participantKey(PNW2_POLICY, await v({ sub: crypto.randomUUID(), jti: undefined }).catch(() => v({ sub: "00000000-0000-4000-8000-000000000000" }))));
+  assert.notEqual(a, await participantKey(PNW2_POLICY, await v({ sub: "00000000-0000-4000-8000-000000000000" })));
   assert.match(a, /^lead_[0-9a-f]{32}$/);
 });
 
