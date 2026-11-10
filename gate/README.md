@@ -89,9 +89,9 @@ During the Stage 4 gap between the SQL and the publish, phones on the dual-mode 
 | Suite | Count | What it covers |
 |---|---|---|
 | Verifier | 7 | Exact `iss`/`aud`/scope; fractional, negative, zero, string, null, huge or misordered timestamps; future `iat`/`nbf`; lifetime over 300s; expiry; `none`/HS256; `kid`/alg pinning; `jku`/`crit`; tampering; personal data; identity derivation. |
-| Handlers + real SQL | 18 | Presenter proof; bare anonymous user refused; grant expiry equals token `exp`; replay after revoke; unbound, mismatched, inactive and foreign-workshop sessions; origin; disabled gate; forged key; identity-field tampering; cross-session; closed poll; payload validation per poll type; expired, revoked and ended-session grants; story slots, cap, lottery and turns; unknown actions; paid guard; browser roles denied on every gate function and table. |
+| Handlers + real SQL | 19 | Presenter proof; bare anonymous user refused; grant expiry equals token `exp`; replay after revoke; unbound, mismatched, inactive and foreign-workshop sessions; origin; disabled gate; forged key; identity-field tampering; cross-session; closed poll; payload validation per poll type; expired, revoked and ended-session grants; story slots, cap, lottery and turns; unknown actions; paid guard; browser roles denied on every gate function and table. |
 | RLS | 5 | Dormant equals baseline; every attendee write closed after enforce; proven presenter operations kept; public reads kept; rollback equals baseline exactly. |
 | Guarded copies | 14 | All 12 are present and current with the live source; the guard sits right after the preflight; no wildcard CORS remains; removing the guard restores the original byte for byte; every provider-calling function is classified; the retired notification sends no email. |
-| Page | 11 | Handshake origin and source; grant core (flag off is a pure passthrough, renewal timing, no extension past expiry, dual vs enforce routing, token wait timeout); standalone redirect rules. |
+| Page | 10 | Handshake origin and source; grant core (flag off is a pure passthrough, renewal timing, no extension past expiry, dual vs enforce routing, token wait timeout); standalone redirect rules. |
 
 Not exercised: the supabase-js calls inside `runtime.ts` (getClaims, rpc transport, JWKS fetch), and the deployed edge runtime. Stage 3 covers those.
