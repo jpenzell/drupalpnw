@@ -1,6 +1,6 @@
 // Interactive gate switch for the page.
-//   "off"     — today's behavior exactly; no gate code runs (current setting).
-//   "dual"    — inside the MainSite frame, attendee writes use the MainSite token; otherwise old path.
+//   "off"     — pre-gate behavior exactly; no gate code runs.
+//   "dual"    — inside the MainSite frame, attendee writes use the MainSite token; otherwise old path (current setting, Stage 2).
 //   "enforce" — attendee writes require the MainSite token; standalone joins go to MainSite capture.
 // Change only at the coordinated stage in gate/README.md, together with the backend step.
 export type GateMode = "off" | "dual" | "enforce";
