@@ -6,6 +6,9 @@ set -euo pipefail
 DIR=/tmp/pnw2-gate-pg
 PORT=54329
 RUN_AS=${PNW2_PG_RUN_AS:-lovable}
+# A complete Postgres 17 build (the sandbox /usr/bin one lacks its extension files).
+PG_BIN=${PNW2_PG_BIN:-$(nix build nixpkgs#postgresql_17 --no-link --print-out-paths | grep -v -- -man | head -1)/bin}
+export PATH="$PG_BIN:$PATH"
 as_user() { if [ "$(id -u)" = "0" ]; then runuser -u "$RUN_AS" -- "$@"; else "$@"; fi; }
 case "${1:-start}" in
   start)
