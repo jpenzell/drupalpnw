@@ -1,18 +1,25 @@
 // STAGED — Deno-only: builds GateDeps from the function environment.
-// Required config: MAINSITE_JWKS_URL (from MainSite), PRESENTATION_PASSWORD (exists today),
-// optional PNW2_ALLOWED_ORIGINS (comma list, default https://drupalpnw.lovable.app).
+// Fixed endpoints derive from the pinned issuer (never from env, tokens or requests):
+//   JWKS        GET  https://www.joshpenzell.com/api/drupal-access/jwks
+//   introspect  POST https://www.joshpenzell.com/api/drupal-access/introspect (Bearer token)
+// Config: PRESENTATION_PASSWORD (exists today); optional PNW2_ALLOWED_ORIGINS (comma list,
+// default https://drupalpnw.lovable.app). No MainSite secret is needed (no shared secret).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { PNW2_POLICY, type PublicJwk } from "./accessToken.ts";
 import type { GateDeps } from "./gateHttp.ts";
+import { introspect, mainSiteEndpoints } from "./mainsite.ts";
 
 let cached: GateDeps | null = null;
+// Public KEYS may be cached briefly; authorization (introspection) never is.
 let jwksCache: { at: number; keys: PublicJwk[] } | null = null;
 
 async function fetchJwks(): Promise<{ keys: PublicJwk[] }> {
-  const url = Deno.env.get("MAINSITE_JWKS_URL");
-  if (!url || !url.startsWith("https://")) throw new Error("not_configured");
-  if (jwksCache && Date.now() - jwksCache.at < 10 * 60_000) return { keys: jwksCache.keys };
-  const r = await fetch(url, { headers: { accept: "application/json" }, redirect: "error" });
+  if (jwksCache && Date.now() - jwksCache.at < 5 * 60_000) return { keys: jwksCache.keys };
+  const r = await fetch(mainSiteEndpoints(PNW2_POLICY.issuer).jwks, {
+    headers: { accept: "application/json" },
+    redirect: "error",
+    signal: AbortSignal.timeout(3000),
+  });
   if (!r.ok) {
     await r.body?.cancel();
     throw new Error("jwks_unavailable");
@@ -36,6 +43,7 @@ export function runtimeDeps(): GateDeps {
       return !error && typeof sub === "string" && data?.claims?.role === "authenticated" ? sub : null;
     },
     jwks: fetchJwks,
+    introspect: (token, access) => introspect(token, access, PNW2_POLICY, fetch),
     policy: PNW2_POLICY,
     allowedOrigins: (Deno.env.get("PNW2_ALLOWED_ORIGINS") ?? "https://drupalpnw.lovable.app")
       .split(",").map((s) => s.trim()).filter(Boolean),
