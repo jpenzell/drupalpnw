@@ -5,7 +5,9 @@
 -- so no browser role gains any capability from this file.
 -- Attendee authority is NOT stored here: MainSite owns it, and the edge function verifies the
 -- signed token and introspects it live on every action before calling these functions with the
--- server-derived participant key. Sessions are chosen server-side (the event's canonical one).
+-- server-derived participant key. Deck entry and self-guided demos need no live session; only live
+-- writes (polls, story) need the event's canonical session, chosen server-side. Nothing here creates,
+-- closes or deletes sessions except the presenter's deliberate password-checked create.
 
 CREATE TABLE public.gate_config (
   id integer PRIMARY KEY DEFAULT 1 CHECK (id = 1),
@@ -47,10 +49,11 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
   )
 $$;
 
--- Internal: the canonical session of the configured PNW event, chosen server-side only.
-CREATE FUNCTION public.gate_attendee_session(p_participant_key text)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE cfg public.gate_config%ROWTYPE; v_session uuid;
+-- Internal: validates the server-derived key and that interactive services are enabled
+-- (false = maintenance, which is also the rollback state).
+CREATE FUNCTION public.gate_require_enabled(p_participant_key text)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE cfg public.gate_config%ROWTYPE;
 BEGIN
   IF p_participant_key IS NULL OR p_participant_key !~ '^lead_[0-9a-f]{32}$' THEN
     RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:malformed';
@@ -58,33 +61,56 @@ BEGIN
   SELECT * INTO cfg FROM public.gate_config WHERE id = 1;
   IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:not_configured'; END IF;
   IF cfg.interactive_enabled IS NOT TRUE THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:maintenance'; END IF;
-  SELECT s.id INTO v_session
-  FROM public.sessions s JOIN public.presenter_sessions ps ON ps.session_id = s.id
-  WHERE s.id = cfg.canonical_session_id AND s.is_active IS TRUE
-    AND ps.presentation_id = cfg.presentation_id AND ps.workshop_id = cfg.workshop_id;
+END $$;
+
+-- Internal: the event's canonical LIVE session if one is running, else NULL. Chosen server-side only;
+-- never created or closed here.
+CREATE FUNCTION public.gate_canonical_session()
+RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT s.id
+  FROM public.gate_config cfg
+  JOIN public.sessions s ON s.id = cfg.canonical_session_id
+  JOIN public.presenter_sessions ps ON ps.session_id = s.id
+  WHERE cfg.id = 1 AND s.is_active IS TRUE
+    AND ps.presentation_id = cfg.presentation_id AND ps.workshop_id = cfg.workshop_id
+$$;
+
+-- Internal: live writes (polls, story) only — require the running canonical session.
+CREATE FUNCTION public.gate_attendee_session(p_participant_key text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_session uuid;
+BEGIN
+  PERFORM public.gate_require_enabled(p_participant_key);
+  v_session := public.gate_canonical_session();
   IF v_session IS NULL THEN RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:session_inactive'; END IF;
   RETURN v_session;
 END $$;
 
+-- Deck entry for a verified+introspected attendee. Works with no live session (post-event,
+-- self-guided use): session is then NULL and only live writes are unavailable.
 CREATE FUNCTION public.gate_identify(p_participant_key text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_session uuid := public.gate_attendee_session(p_participant_key); s jsonb;
+DECLARE v_session uuid; s jsonb;
 BEGIN
-  SELECT jsonb_build_object('id', id, 'code', code, 'current_slide', current_slide, 'is_active', is_active, 'created_at', created_at)
-  INTO s FROM public.sessions WHERE id = v_session;
+  PERFORM public.gate_require_enabled(p_participant_key);
+  v_session := public.gate_canonical_session();
+  IF v_session IS NOT NULL THEN
+    SELECT jsonb_build_object('id', id, 'code', code, 'current_slide', current_slide, 'is_active', is_active, 'created_at', created_at)
+    INTO s FROM public.sessions WHERE id = v_session;
+  END IF;
   RETURN jsonb_build_object('participant_key', p_participant_key, 'session', s);
 END $$;
 
--- For guarded paid functions: a verified+introspected attendee while interactive is enabled and
--- the canonical session is live, or a password-authorized presenter.
+-- For guarded paid functions (self-guided demos, no session data mutated): a verified+introspected
+-- attendee while interactive services are enabled — no live session needed — or a
+-- password-authorized presenter.
 CREATE FUNCTION public.gate_check_access(p_participant_key text, p_presenter_user uuid)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE v_session uuid;
 BEGIN
   IF p_participant_key IS NOT NULL THEN
     BEGIN
-      v_session := public.gate_attendee_session(p_participant_key);
-      RETURN jsonb_build_object('kind', 'attendee', 'participant_key', p_participant_key, 'session_id', v_session);
+      PERFORM public.gate_require_enabled(p_participant_key);
+      RETURN jsonb_build_object('kind', 'attendee', 'participant_key', p_participant_key);
     EXCEPTION WHEN SQLSTATE 'P0001' THEN
       RETURN NULL; -- attendees never fall through to presenter checks
     END;
@@ -96,6 +122,12 @@ BEGIN
   END IF;
   RETURN NULL;
 END $$;
+
+-- Presenter entry check for the standalone deck: authorization expiry, or NULL.
+CREATE FUNCTION public.gate_presenter_status(p_user uuid)
+RETURNS timestamptz LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT a.expires_at FROM public.presenter_authorizations a WHERE a.user_id = p_user AND a.expires_at > now()
+$$;
 
 -- Payload validation matching responses.value (jsonb object) as the deck actually sends it:
 -- { answer }, { choice }, { choices: [...] }, { number }, { year }, { text }, { "Slam dunk": n, ... }.
@@ -276,7 +308,10 @@ BEGIN
   RAISE EXCEPTION USING ERRCODE = 'P0001', MESSAGE = 'gate:unavailable';
 END $$;
 
+REVOKE ALL ON FUNCTION public.gate_require_enabled(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.gate_canonical_session() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_attendee_session(text) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.gate_presenter_status(uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_identify(text) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_check_access(text, uuid) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.gate_valid_value(jsonb, public.poll_type, jsonb) FROM PUBLIC, anon, authenticated;
@@ -295,5 +330,6 @@ GRANT EXECUTE ON FUNCTION public.gate_my_responses(text, uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_story_volunteer(text, text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_story_word(text, text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_authorize_presenter(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.gate_presenter_status(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.gate_create_presenter_session(uuid) TO service_role;
 GRANT EXECUTE ON FUNCTION public.is_proven_presenter(uuid) TO authenticated, service_role;

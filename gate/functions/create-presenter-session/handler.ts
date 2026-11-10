@@ -1,6 +1,7 @@
 // STAGED — presenter authority from the EXISTING PRESENTATION_PASSWORD secret (same comparison as
 // verify-password) plus a verified Lovable Cloud login. "authorize" records the login server-side
-// for 12 hours; "create_session" creates the event's canonical session. Attendee (MainSite) tokens
+// for 12 hours; "status" reports it (standalone deck entry); "create_session" creates the event's
+// canonical live session (deliberate only — never automatic). Attendee (MainSite) tokens
 // are refused here outright: they never grant host actions.
 import { looksLikeMainSiteToken } from "../_shared/accessToken.ts";
 import { bearerOf, corsFor, type GateDeps, jsonResponse, mapDbError, readJson } from "../_shared/gateHttp.ts";
@@ -40,6 +41,15 @@ export async function handleCreatePresenterSession(req: Request, deps: GateDeps)
       return jsonResponse(cors, { error: m.code }, m.status);
     }
     return jsonResponse(cors, { authorized_until: data });
+  }
+
+  if (body.action === "status") {
+    const { data, error } = await deps.admin.rpc("gate_presenter_status", { p_user: userId });
+    if (error) {
+      const m = mapDbError(error.message);
+      return jsonResponse(cors, { error: m.code }, m.status);
+    }
+    return jsonResponse(cors, { authorized_until: data ?? null });
   }
 
   if (body.action === "create_session") {
