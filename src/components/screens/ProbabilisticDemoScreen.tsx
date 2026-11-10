@@ -5,6 +5,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { usePresentationMode } from "@/contexts/PresentationModeContext";
+import { invokeFunction } from "@/lib/gate/gateClient";
 
 const modeContent = {
   wine: {
@@ -45,7 +46,7 @@ export const ProbabilisticDemoScreen = () => {
     setResponse("");
 
     try {
-      const { data, error } = await supabase.functions.invoke('presentation-ai-assistant', {
+      const { data, error } = await invokeFunction('presentation-ai-assistant', {
         body: { 
           message: question,
           context: "Answer this question as if you know the company's policies, even if you don't have specific information."
