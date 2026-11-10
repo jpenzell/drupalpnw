@@ -12,6 +12,7 @@ import CanvasTemplate from "./pages/CanvasTemplate";
 import RehearsalTool from "./pages/RehearsalTool";
 import Connect from "./pages/Connect";
 import Unsubscribe from "./pages/Unsubscribe";
+import { AccessGate } from "@/components/gate/AccessGate";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <AccessGate>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/canvas" element={<CanvasTemplate />} />
@@ -33,6 +35,7 @@ const App = () => (
                 <Route path="/email-unsubscribe" element={<Unsubscribe />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </AccessGate>
             </BrowserRouter>
           </PollProvider>
         </SessionProvider>
