@@ -132,10 +132,11 @@ export function createGateCore(deps: GateCoreDeps) {
     return direct();
   }
 
-  function withGrantHeader<O extends { headers?: Record<string, string> }>(opts: O | undefined): O | undefined {
+  function withGrantHeader<O extends object>(opts: O | undefined): O | undefined {
     const g = deps.mode === "off" ? null : grant();
     if (!g) return opts;
-    return { ...(opts ?? ({} as O)), headers: { ...(opts?.headers ?? {}), "x-pnw2-grant": g.grant } };
+    const prev = (opts as { headers?: Record<string, string> } | undefined)?.headers ?? {};
+    return { ...(opts ?? ({} as O)), headers: { ...prev, "x-pnw2-grant": g.grant } } as O;
   }
 
   return { grant, connect, disconnect, submit, route, withGrantHeader, listen };

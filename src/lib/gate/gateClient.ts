@@ -40,7 +40,7 @@ export const gate = createGateCore({
 
 /** Drop-in for supabase.functions.invoke on guarded paid functions: adds the grant when held. */
 export function invokeFunction<T = any>(name: string, options?: InvokeOptions) {
-  return supabase.functions.invoke<T>(name, gate.withGrantHeader(options as { headers?: Record<string, string> }) as InvokeOptions);
+  return supabase.functions.invoke<T>(name, gate.withGrantHeader(options));
 }
 
 /** In enforce mode, sends standalone attendee entry points to MainSite capture. Returns true if redirecting. */

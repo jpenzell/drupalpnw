@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createGateCore, type Invoker, type TokenSource } from "./gateCore";
 
@@ -53,7 +53,7 @@ test("framed connect redeems the parent token and gated writes carry the grant",
   const r = await h.core.submit("poll_response", { poll_id: "p", value: { a: 1 } });
   assert.equal(r.ok, true);
   assert.equal(h.calls[1].opts.headers["x-pnw2-grant"], "g1");
-  assert.deepEqual(h.core.withGrantHeader({ body: 1 })?.headers, { "x-pnw2-grant": "g1" });
+  assert.deepEqual((h.core.withGrantHeader({ body: 1 }) as { headers?: unknown })?.headers, { "x-pnw2-grant": "g1" });
 });
 
 test("grant is never used past its own expiry; renewal only via a fresh parent token", async () => {
