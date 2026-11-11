@@ -21,5 +21,6 @@
 - [x] Stage 3: interactive_enabled=true; forged-token denials and live JWKS reach verified (gate/STAGE3_APPLIED.md).
 - [x] Stage 3 handshake fallback diagnosed (saved pre-gate presenter room skipped the handshake) and fixed in source; offline dual check 14/14 (gate/STAGE3_HANDSHAKE_FIX.md).
 - [ ] Publish the handshake fix (Stage 2 frontend redeploy) — awaits root authorization.
-- [ ] Stage 3 acceptance: real framed token transport, renewal and revocation — awaits root, after the fix is published. Capture + HubSpot already accepted by root.
+- [x] Stage 3 acceptance: real framed identify 200 (04:31:15 UTC) and renewal 200 (04:35:16 UTC).
+- [ ] Stage 3 revocation check — awaits root revoking the synthetic QA grant.
 - [ ] Stage 4 (12 guards, retired notification, 02_enforce.sql, "enforce" publish) — held until root supplies Stage 3 acceptance.
