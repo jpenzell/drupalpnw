@@ -84,6 +84,15 @@ export function AccessGate({ children }: { children: ReactNode }) {
   const [access, setAccess] = useState<Access | null>(null);
   const [everOpen, setEverOpen] = useState(false);
 
+  // Dual, inside MainSite: the deck stays open either way; still show the honest not-running
+  // notice once the server has confirmed MainSite access and no live session is running.
+  const dualFramed = decision === "render" && GATE_MODE !== "off" && isEmbeddedWindow();
+  useEffect(() => {
+    if (!dualFramed) return;
+    setAccess(gate.access());
+    return gate.listen(setAccess);
+  }, [dualFramed]);
+
   useEffect(() => {
     let cancelled = false;
     if (decision === "render") { setState("open"); return; }
@@ -118,7 +127,7 @@ export function AccessGate({ children }: { children: ReactNode }) {
   if (state === "denied") return decision === "await_access" ? <EventPageNotice expired={everOpen} /> : null;
   return (
     <>
-      {decision === "await_access" && access && !access.session && <NoLiveActivityNotice />}
+      {(decision === "await_access" || dualFramed) && access && !access.session && <NoLiveActivityNotice />}
       {children}
     </>
   );

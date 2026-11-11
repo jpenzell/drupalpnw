@@ -330,7 +330,7 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   // Gate on, inside MainSite: join the event automatically (MainSite need not pass a code).
   useEffect(() => {
     if (GATE_MODE === "off" || !authReady || session || isPresenter || !isEmbeddedWindow()) return;
-    if (localStorage.getItem("presenter_session_id")) return;
+    // A presenter room saved in this frame by the pre-gate deck must not skip the MainSite handshake.
     void joinSession("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady]);
@@ -338,6 +338,8 @@ export const SessionProvider = ({ children }: { children: ReactNode }) => {
   // Check for existing presenter session on mount (after auth ready)
   useEffect(() => {
     if (!authReady || !participantId) return;
+    // Gate on, inside MainSite: always an attendee; never resume a presenter room saved here earlier.
+    if (GATE_MODE !== "off" && isEmbeddedWindow()) return;
 
     const storedSessionId = localStorage.getItem("presenter_session_id");
     if (storedSessionId) {

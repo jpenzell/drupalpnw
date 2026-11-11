@@ -7,14 +7,20 @@
 
 const FN = "https://functions.gate.test";
 type Session = { access_token: string; user: { id: string } } | null;
-let session: Session = null;
+// Test-only seed (set by the harness's init script in the deck frame): a persisted anonymous login
+// and a stale presenter room from an earlier, pre-gate visit, as found in a real browser profile.
+type Seed = { user_id: string; row: Record<string, unknown> } | null;
+let seed: Seed = null;
+try { seed = JSON.parse(localStorage.getItem("__gate_test_seed") ?? "null"); } catch { seed = null; }
+let session: Session = seed ? { access_token: "fake-login-seeded", user: { id: seed.user_id } } : null;
 const authListeners = new Set<(event: string, s: Session) => void>();
 
 const report = (kind: string, detail: unknown = {}) =>
   fetch(`${FN}/__report/${kind}`, { method: "POST", body: JSON.stringify(detail) }).catch(() => undefined);
 
-function query(single = false): any {
-  const result = () => Promise.resolve({ data: single ? null : [], error: null, count: 0 });
+function query(table = "", single = false): any {
+  const row = table === "sessions" && seed ? seed.row : null;
+  const result = () => Promise.resolve({ data: single ? row : row ? [row] : [], error: null, count: 0 });
   const target: any = {
     then: (res: any, rej: any) => result().then(res, rej),
     catch: (rej: any) => result().catch(rej),
@@ -23,8 +29,11 @@ function query(single = false): any {
   return new Proxy(target, {
     get(t, prop) {
       if (prop in t) return t[prop];
-      if (prop === "single" || prop === "maybeSingle") return () => query(true);
-      return () => query(single);
+      if (prop === "single" || prop === "maybeSingle") return () => query(table, true);
+      if (prop === "update" || prop === "insert" || prop === "upsert" || prop === "delete") {
+        return () => { void report("write", { table, op: prop }); return query(table, single); };
+      }
+      return () => query(table, single);
     },
   });
 }
@@ -76,7 +85,7 @@ export const supabase: any = {
       return { data: await res.json(), error: null };
     },
   },
-  from: () => query(),
+  from: (table: string) => query(table),
   rpc: () => query(),
   channel,
   removeChannel: async () => "ok",

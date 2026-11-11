@@ -19,5 +19,7 @@
 - [x] Stage 2 source: `GATE_MODE` "dual"; tests, trial build and offline browser checks pass (gate/STAGE2_PREPARED.md).
 - [x] Stage 2 publish — root deployment 27a81f8b at 179b28d; live bundle byte-identical to offline rebuild (gate/STAGE3_APPLIED.md).
 - [x] Stage 3: interactive_enabled=true; forged-token denials and live JWKS reach verified (gate/STAGE3_APPLIED.md).
-- [ ] Stage 3 acceptance: real browser capture, HubSpot and token/introspection/revocation — awaits root.
+- [x] Stage 3 handshake fallback diagnosed (saved pre-gate presenter room skipped the handshake) and fixed in source; offline dual check 14/14 (gate/STAGE3_HANDSHAKE_FIX.md).
+- [ ] Publish the handshake fix (Stage 2 frontend redeploy) — awaits root authorization.
+- [ ] Stage 3 acceptance: real framed token transport, renewal and revocation — awaits root, after the fix is published. Capture + HubSpot already accepted by root.
 - [ ] Stage 4 (12 guards, retired notification, 02_enforce.sql, "enforce" publish) — held until root supplies Stage 3 acceptance.
