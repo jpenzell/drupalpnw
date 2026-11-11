@@ -14,8 +14,10 @@
 
 # Interactive access gate (MainSite canonical)
 - [x] Stage 0: staged implementation aligned to the final MainSite contract (Ed25519, per-action introspection, server-side canonical session, nonce handshake, maintenance-only rollback, 12 guarded paid functions, post-event self-guided access with whole-deck entry gate) — 69 synthetic tests + 36/36 offline browser checks pass (gate/ACCEPTANCE.md).
-- [ ] MainSite: issuer https://www.joshpenzell.com; gated-route apex → www canonicalization; secure Ed25519 signing key + JWKS; gate ON; introspect rate budget — blocked on MainSite.
+- [x] MainSite: published; live JWKS serves Ed25519 kid 46bdcdc5ccffcc8ea943480d; introspect gate ON (401 without token).
 - [x] Stage 1: dormant migration, maintenance config, shared modules, submit-interaction and create-presenter-session live; denials verified (gate/STAGE1_APPLIED.md).
 - [x] Stage 2 source: `GATE_MODE` "dual"; tests, trial build and offline browser checks pass (gate/STAGE2_PREPARED.md).
-- [ ] Stage 2 publish — held for root's coordinated publication with MainSite.
-- [ ] Stage 3 (interactive on, one synthetic capture) and Stage 4 (enforce) — each awaits root authorization.
+- [x] Stage 2 publish — root deployment 27a81f8b at 179b28d; live bundle byte-identical to offline rebuild (gate/STAGE3_APPLIED.md).
+- [x] Stage 3: interactive_enabled=true; forged-token denials and live JWKS reach verified (gate/STAGE3_APPLIED.md).
+- [ ] Stage 3 acceptance: real browser capture, HubSpot and token/introspection/revocation — awaits root.
+- [ ] Stage 4 (12 guards, retired notification, 02_enforce.sql, "enforce" publish) — held until root supplies Stage 3 acceptance.
