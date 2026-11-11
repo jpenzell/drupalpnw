@@ -29,6 +29,13 @@
       "when": 1794301952310,
       "tag": "0003_pnw2_gate_stage1_dormant",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794373601927,
+      "tag": "0004_pnw2_gate_stage4_enforce",
+      "breakpoints": true
     }
   ]
 }

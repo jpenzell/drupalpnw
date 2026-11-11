@@ -145,6 +145,9 @@ describe.skipIf(!DB_TESTS_ENABLED)("gate handlers on local Postgres (final MainS
     const r = await act(t, { action: "poll_response", poll_id: pollId, value: { text: "x" } });
     assert.equal(r.status, 401);
     assert.equal(r.body.error, "access_revoked");
+    // The same revoked grant is refused by the paid-function guard before any provider call.
+    const paid = new Request("https://fn.local", { method: "POST", headers: { Origin: ORIGIN, Authorization: `Bearer ${t}` } });
+    assert.equal((await denyWithoutAccess(paid, deps))?.status, 401);
   });
 
   test("policy service unavailable fails closed for actions and paid functions", async () => {

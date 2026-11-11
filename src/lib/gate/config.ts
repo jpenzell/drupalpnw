@@ -1,10 +1,10 @@
 // Interactive gate switch for the page.
 //   "off"     — pre-gate behavior exactly; no gate code runs.
-//   "dual"    — inside the MainSite frame, attendee writes use the MainSite token; otherwise old path (current setting, Stage 2).
-//   "enforce" — attendee writes require the MainSite token; standalone joins go to MainSite capture.
+//   "dual"    — inside the MainSite frame, attendee writes use the MainSite token; otherwise old path (Stage 2).
+//   "enforce" — attendee writes require the MainSite token; standalone joins go to MainSite capture (current setting, Stage 4).
 // Change only at the coordinated stage in gate/README.md, together with the backend step.
 export type GateMode = "off" | "dual" | "enforce";
-export const GATE_MODE = "dual" as GateMode;
+export const GATE_MODE = "enforce" as GateMode;
 
 // Exact parent origin (www; verified that the root does not redirect away from www).
 export const MAINSITE_ORIGIN = "https://www.joshpenzell.com";

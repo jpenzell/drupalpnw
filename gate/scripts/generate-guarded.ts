@@ -67,8 +67,15 @@ export function transform(name: string, source: string): string {
   return [...banner, ...lines].join("\n");
 }
 
+// Pre-guard source of each paid function, preserved at Stage 4 in gate/originals/ (reference only —
+// never redeploy it: rollback is maintenance, not reopening unguarded functions). Edit a paid function
+// there, regenerate, then copy the guarded output into supabase/functions/<name>/index.ts.
 export function sourceOf(name: string): string {
-  return readFileSync(join(ROOT, "supabase", "functions", name, "index.ts"), "utf8");
+  return readFileSync(join(ROOT, "gate", "originals", name, "index.ts"), "utf8");
+}
+
+export function deployedPath(name: string): string {
+  return join(ROOT, "supabase", "functions", name, "index.ts");
 }
 
 export function outputPath(name: string): string {
@@ -84,6 +91,9 @@ if (import.meta.main) {
       let current = "";
       try { current = readFileSync(outputPath(name), "utf8"); } catch { /* missing */ }
       if (current !== out) { stale++; console.error(`stale: ${name}`); }
+      let deployed = "";
+      try { deployed = readFileSync(deployedPath(name), "utf8"); } catch { /* missing */ }
+      if (deployed !== out) { stale++; console.error(`deployed copy differs: ${name}`); }
     } else {
       mkdirSync(dirname(outputPath(name)), { recursive: true });
       writeFileSync(outputPath(name), out);

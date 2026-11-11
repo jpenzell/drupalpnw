@@ -4,7 +4,7 @@ import { test } from "bun:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { GUARD_IMPORT, GUARD_LINES, GUARDED_FUNCTIONS, outputPath, sourceOf, transform, UNGUARDED_FUNCTIONS } from "../scripts/generate-guarded.ts";
+import { deployedPath, GUARD_IMPORT, GUARD_LINES, GUARDED_FUNCTIONS, outputPath, sourceOf, transform, UNGUARDED_FUNCTIONS } from "../scripts/generate-guarded.ts";
 
 const LIVE = join(import.meta.dir, "..", "..", "supabase", "functions");
 const PROVIDER = /ai\.gateway\.lovable\.dev|api\.anthropic\.com|api\.openai\.com|api\.perplexity\.ai/;
@@ -25,6 +25,8 @@ for (const name of GUARDED_FUNCTIONS) {
     const src = sourceOf(name);
     const out = readFileSync(outputPath(name), "utf8");
     assert.equal(out, transform(name, src), "stale — run bun ./gate/scripts/generate-guarded.ts");
+    // Stage 4: the deployed function is the guarded copy, byte for byte (never the unguarded original).
+    assert.equal(readFileSync(deployedPath(name), "utf8"), out, "supabase/functions copy is not the guarded copy");
     assert.ok(!/Access-Control-Allow-Origin["']\s*:\s*["']\*["']/.test(out));
     assert.ok(out.includes(GUARD_IMPORT));
     const lines = out.split("\n");
@@ -43,6 +45,8 @@ for (const name of GUARDED_FUNCTIONS) {
 
 test("retired connect notification never sends email", () => {
   const out = readFileSync(join(import.meta.dir, "..", "functions", "send-connect-notification", "index.ts"), "utf8");
+  // Stage 4: the deployed notification is the retired 410 stub, byte for byte.
+  assert.equal(readFileSync(join(LIVE, "send-connect-notification", "index.ts"), "utf8"), out);
   assert.ok(!/sendLovableEmail|createClient|fetch\(/.test(out));
   assert.match(out, /status: 410/);
 });

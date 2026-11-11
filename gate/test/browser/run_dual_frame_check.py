@@ -14,7 +14,9 @@ from playwright.async_api import async_playwright
 
 import run_browser_acceptance as h
 
-h.DIST = Path("/tmp/gatetest/dist-dual")
+import os
+h.DIST = Path(os.environ.get("GATE_FRAME_DIST", "/tmp/gatetest/dist-dual"))  # set to /tmp/gatetest/dist to check the enforce build
+MODE = "enforce" if h.DIST.name == "dist" else "dual"
 STALE = {"id": "00000000-0000-4000-8000-0000000000ee", "code": "STAL", "current_slide": "S0-sponsors",
          "is_active": True, "created_at": "2026-11-02T22:07:41Z", "presenter_id": "00000000-0000-4000-8000-0000000000aa"}
 SEED = {"user_id": STALE["presenter_id"], "row": STALE}
@@ -57,19 +59,19 @@ async def main():
             tokens = await page.evaluate("window.__tokens")
             ids = h.identify_calls()
             body = await page.frames[1].evaluate("document.body.innerText")
-            h.check(f"dual/{label}: deck asked MainSite for access", len(nonces) >= 1, f"nonces={len(nonces)}")
-            h.check(f"dual/{label}: identify used the parent's token", bool(ids) and ids[0]["auth"] == f"Bearer {tokens[0] if tokens else ''}", f"identify={len(ids)}")
-            h.check(f"dual/{label}: not-running notice shown", banner)
-            h.check(f"dual/{label}: no saved room shown or driven", "STAL" not in body and not writes(), f"writes={writes()}")
-            h.check(f"dual/{label}: no Start Session control in the frame", await fr.get_by_role("button", name="Start Session").count() == 0)
-            h.check(f"dual/{label}: no request reached any real backend", not h.backend_leaks(), str(h.backend_leaks()[:3]))
+            h.check(f"{MODE}/{label}: deck asked MainSite for access", len(nonces) >= 1, f"nonces={len(nonces)}")
+            h.check(f"{MODE}/{label}: identify used the parent's token", bool(ids) and ids[0]["auth"] == f"Bearer {tokens[0] if tokens else ''}", f"identify={len(ids)}")
+            h.check(f"{MODE}/{label}: not-running notice shown", banner)
+            h.check(f"{MODE}/{label}: no saved room shown or driven", "STAL" not in body and not writes(), f"writes={writes()}")
+            h.check(f"{MODE}/{label}: no Start Session control in the frame", await fr.get_by_role("button", name="Start Session").count() == 0)
+            h.check(f"{MODE}/{label}: no request reached any real backend", not h.backend_leaks(), str(h.backend_leaks()[:3]))
             await page.screenshot(path=str(h.SHOTS / f"dual_{'stale' if seeded else 'clean'}.png"))
             # Keyboard stepping inside the frame must not move any room.
             await page.frames[1].locator("body").click(position={"x": 640, "y": 900})
             for _ in range(3):
                 await page.keyboard.press("ArrowRight")
                 await page.wait_for_timeout(250)
-            h.check(f"dual/{label}: stepping slides writes nothing", not writes(), f"writes={writes()}")
+            h.check(f"{MODE}/{label}: stepping slides writes nothing", not writes(), f"writes={writes()}")
             await ctx.close()
         await browser.close()
     print(f"\n{sum(ok for _, ok, _ in h.RESULTS)}/{len(h.RESULTS)} checks passed")

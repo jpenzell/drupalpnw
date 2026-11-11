@@ -20,7 +20,8 @@
 - [x] Stage 2 publish — root deployment 27a81f8b at 179b28d; live bundle byte-identical to offline rebuild (gate/STAGE3_APPLIED.md).
 - [x] Stage 3: interactive_enabled=true; forged-token denials and live JWKS reach verified (gate/STAGE3_APPLIED.md).
 - [x] Stage 3 handshake fallback diagnosed (saved pre-gate presenter room skipped the handshake) and fixed in source; offline dual check 14/14 (gate/STAGE3_HANDSHAKE_FIX.md).
-- [ ] Publish the handshake fix (Stage 2 frontend redeploy) — awaits root authorization.
+- [x] Publish the handshake fix (Stage 2 frontend redeploy) — root deployment 89beddf7.
 - [x] Stage 3 acceptance: real framed identify 200 (04:31:15 UTC) and renewal 200 (04:35:16 UTC).
-- [ ] Stage 3 revocation check — awaits root revoking the synthetic QA grant.
-- [ ] Stage 4 (12 guards, retired notification, 02_enforce.sql, "enforce" publish) — held until root supplies Stage 3 acceptance.
+- [ ] Stage 3 live revocation check — not possible yet: MainSite has no supported revoke path (read-only production DB). Offline revoked-denial tests pass.
+- [x] Stage 4 backend: 12 guards + retired notification deployed, 02_enforce.sql applied, GATE_MODE "enforce" in source (gate/STAGE4_APPLIED.md).
+- [ ] Stage 4 publish of the enforce page — root publishes after review, then browser acceptance in gate/STAGE4_APPLIED.md.

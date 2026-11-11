@@ -1,4 +1,6 @@
-# PNW2 interactive gate: Stage 1 live and dormant, later stages staged (final MainSite contract)
+# PNW2 interactive gate: Stage 4 backend enforced; enforce page awaiting publish (final MainSite contract)
+
+**Stage 4 (2026-11-11):** 12 guarded paid functions and the retired notification are live, `02_enforce.sql` is applied, and `GATE_MODE` is "enforce" in source (not yet published). See `STAGE4_APPLIED.md`. The older status notes below are kept for history.
 
 **Status:** Stage 1 was applied on 2026-11-10 (see `STAGE1_APPLIED.md`):
 - `01_dormant_gate.sql` is applied;
